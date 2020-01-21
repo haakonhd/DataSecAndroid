@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:focusable="false"
+    android:focusableInTouchMode="true"
+    tools:context=".MainActivity">
+
+    <TextView
+        android:id="@+id/statusTextView"
+        android:layout_width="229dp"
+        android:layout_height="45dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="16dp"
+        android:text="Logged in status message"
+        android:textSize="18sp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/goToSignInBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:text="@string/sign_in"
+        app:layout_constraintBottom_toBottomOf="@+id/statusTextView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/statusTextView"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <EditText
+        android:id="@+id/enterPinTextView"
+        android:layout_width="213dp"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:focusable="true"
+        android:hint="enter 4 digit pin"
+        android:inputType="numberPassword"
+        android:maxLength="4"
+        android:textAlignment="center"
+        app:layout_constraintStart_toStartOf="@+id/pinInfoTextView"
+        app:layout_constraintTop_toBottomOf="@+id/pinInfoTextView" />
+
+    <TextView
+        android:id="@+id/pinInfoTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="as guest enter PIN to see messages"
+        android:textAlignment="center"
+        android:textSize="13sp"
+        app:layout_constraintStart_toStartOf="@+id/statusTextView"
+        app:layout_constraintTop_toBottomOf="@+id/statusTextView" />
+
+    <Button
+        android:id="@+id/confirmPinBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:text="Confirm PIN"
+        app:layout_constraintBottom_toBottomOf="@+id/enterPinTextView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/enterPinTextView" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="220dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:background="@android:color/darker_gray"
+        android:scrollbars="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/goToSignInBtn" />
+
+    <Button
+        android:id="@+id/changePasswordBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Change Password"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/sendMessageBtn"
+        app:layout_constraintTop_toBottomOf="@+id/confirmPinBtn" />
+
+    <Button
+        android:id="@+id/sendMessageBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Send Message"
+        app:layout_constraintBottom_toBottomOf="@+id/changePasswordBtn"
+        app:layout_constraintEnd_toStartOf="@+id/changePasswordBtn"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/messageReplyBtn" />
+
+    <Button
+        android:id="@+id/messageReplyBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Reply"
+        app:layout_constraintBottom_toBottomOf="@+id/sendMessageBtn"
+        app:layout_constraintEnd_toStartOf="@+id/sendMessageBtn"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/addSubjectBtn"
+        android:layout_width="115dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Add Subject"
+        app:layout_constraintEnd_toEndOf="@+id/changePasswordBtn"
+        app:layout_constraintTop_toBottomOf="@+id/changePasswordBtn" />
+
+    <Button
+        android:id="@+id/takePicureBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:text="Take Picture"
+        android:onClick="takePic"
+        app:layout_constraintBottom_toBottomOf="@+id/addSubjectBtn"
+        app:layout_constraintEnd_toStartOf="@+id/addSubjectBtn" />
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="56dp"
+        android:layout_height="57dp"
+        android:layout_marginEnd="24dp"
+        app:layout_constraintEnd_toStartOf="@+id/takePicureBtn"
+        app:layout_constraintTop_toTopOf="@+id/takePicureBtn"
+        app:srcCompat="@drawable/ic_launcher_background" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
