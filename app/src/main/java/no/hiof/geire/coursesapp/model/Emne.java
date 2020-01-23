@@ -10,13 +10,13 @@ public class Emne {
 
     private String emnekode;
     private String emnenavn;
-    private int pinNr;
+    private int PIN;
     private int foreleser;
 
-    public Emne(String emnekode, String emnenavn, int pinNr, int foreleser) {
+    public Emne(String emnekode, String emnenavn, int PIN, int foreleser) {
         this.emnekode = emnekode;
         this.emnenavn = emnenavn;
-        this.pinNr = pinNr;
+        this.PIN = PIN;
         this.foreleser = foreleser;
     }
 
@@ -41,11 +41,11 @@ public class Emne {
     }
 
     public int getPinNr() {
-        return pinNr;
+        return PIN;
     }
 
-    public void setPinNr(int pinNr) {
-        this.pinNr = pinNr;
+    public void setPinNr(int PIN) {
+        this.PIN = PIN;
     }
 
     public int getForeleser() {
@@ -56,24 +56,4 @@ public class Emne {
         this.foreleser = foreleser;
     }
 
-
-    public ArrayList<Emne> getEmneArray (String json) throws JSONException {
-        //creating a json array from the json string
-        JSONArray jsonArray = new JSONArray(json);
-
-        ArrayList<Emne> courses = new ArrayList<>();
-
-        //looping through all the elements in json array
-        for (int i = 0; i < jsonArray.length(); i++) {
-
-            //getting json object from the json array
-            JSONObject obj= jsonArray.getJSONObject(i);
-
-            //getting the data from the json object and putting it inside object array
-            Emne course = new Emne(obj.getString("emnekode"), obj.getString("emnenavn"), obj.getInt("pinNr"), obj.getInt("foreleser"));
-            courses.add(course);
-        }
-
-        return courses;
-    }
 }

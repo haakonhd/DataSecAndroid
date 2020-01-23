@@ -45,18 +45,22 @@ public class DatabaseAccess {
 
     public static ArrayList<Emne> getEmneArray (String json) throws JSONException {
         //creating a json array from the json string
-        JSONArray jsonArray = new JSONArray(json);
-
+        JSONObject jsnobject = new JSONObject(json);
+        JSONArray jsonArray = jsnobject.getJSONArray("emner");
         ArrayList<Emne> courses = new ArrayList<>();
 
         //looping through all the elements in json array
         for (int i = 0; i < jsonArray.length(); i++) {
 
             //getting json object from the json array
-            JSONObject obj= jsonArray.getJSONObject(i);
+            JSONObject obj = jsonArray.getJSONObject(i);
 
             //getting the data from the json object and putting it inside object array
-            Emne course = new Emne(obj.getString("emnekode"), obj.getString("emnenavn"), obj.getInt("PIN"), obj.getInt("foreleser"));
+            Emne course = new Emne();
+            course.setEmnekode(obj.optString("emnekode"));
+            course.setEmnenavn(obj.optString("emnenavn"));
+            course.setPinNr(obj.optInt("PIN"));
+            course.setForeleser(obj.optInt("foreleser"));
             courses.add(course);
         }
 

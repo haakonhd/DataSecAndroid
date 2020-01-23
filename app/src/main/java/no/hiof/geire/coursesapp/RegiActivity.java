@@ -60,8 +60,6 @@ public class RegiActivity extends AppCompatActivity implements CourseRecyclerVie
         CourseTextView = findViewById(R.id.courseTextView);
         ClassEditText = findViewById(R.id.classEditText);
 
-        downloadJSON("http://158.39.188.228/api/studieretning/read.php");
-
         if(RegisterAs == 0) {
             RegisterMainTextView.setText("Registrer deg som student");
             CourseTextView.setText("Velg din studieretning");
@@ -72,7 +70,7 @@ public class RegiActivity extends AppCompatActivity implements CourseRecyclerVie
             RegisterMainTextView.setText("Registrer deg som foreleser");
             CourseTextView.setText("Velg et kurs du har hovedansvaret for");
             ClassEditText.setVisibility(View.INVISIBLE);
-            fillCourseRecyclerView();
+            downloadJSON("http://158.39.188.228/api/emne/read.php");
         }
     }
 
@@ -91,11 +89,7 @@ public class RegiActivity extends AppCompatActivity implements CourseRecyclerVie
             protected void onPostExecute(String s) {
                 super.onPostExecute(s);
                 Toast.makeText(getApplicationContext(), s, Toast.LENGTH_LONG).show();
-                /*try {
-                    loadIntoListView(s);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }*/
+                fillCourseRecyclerView(s);
             }
 
             @Override
@@ -140,15 +134,11 @@ public class RegiActivity extends AppCompatActivity implements CourseRecyclerVie
             Toast.makeText(this, "You clicked " + courseAdapter.getItem(position) + " on row number " + position, Toast.LENGTH_SHORT).show();
     }
 
-    private void fillCourseRecyclerView(){
+    private void fillCourseRecyclerView(String jsonString){
 
-        //("https://jsonplaceholder.typicode.com/todos/1");
         ArrayList<Emne> courses = new ArrayList<>();
 
-        //Displaying a toast with the json string
-        //Toast.makeText(this, jsonString + " ***test***test***test***", Toast.LENGTH_LONG).show();
-
-        /*try {
+        try {
             courses = getEmneArray(jsonString);
         } catch (JSONException e) {
             Toast.makeText(this, "getEmneArray fail", Toast.LENGTH_SHORT).show();
@@ -159,7 +149,7 @@ public class RegiActivity extends AppCompatActivity implements CourseRecyclerVie
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         courseAdapter = new CourseRecyclerViewAdapter(this, courses);
         courseAdapter.setClickListener(this);
-        recyclerView.setAdapter(courseAdapter);*/
+        recyclerView.setAdapter(courseAdapter);
     }
 
     private void fillStudyProgramRecyclerView(){
