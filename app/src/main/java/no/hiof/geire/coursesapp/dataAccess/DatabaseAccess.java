@@ -20,37 +20,7 @@ import no.hiof.geire.coursesapp.model.Studieretning;
 
 public class DatabaseAccess {
 
-    public static String getJSON(final String urlWebService) {
-        try {
-            //creating a URL
-            URL url = new URL(urlWebService);
 
-            //Opening the URL using HttpURLConnection
-            HttpURLConnection con = (HttpURLConnection) url.openConnection();
-
-            //StringBuilder object to read the string from the service
-            StringBuilder sb = new StringBuilder();
-
-            //We will use a buffered reader to read the string from service
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(con.getInputStream()));
-
-            //A simple string to read values from each line
-            String json;
-
-            //reading until we don't find null
-            while ((json = bufferedReader.readLine()) != null) {
-
-                //appending it to string builder
-                sb.append(json + "\n");
-            }
-
-            //finally returning the read string
-            return sb.toString().trim();
-        }
-        catch (Exception e) {
-            return "getJSON failed";
-        }
-    }
 
     public static ArrayList<Melding> getMeldingArray (String json) throws JSONException {
         //creating a json array from the json string

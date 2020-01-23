@@ -43,7 +43,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-import static no.hiof.geire.coursesapp.dataAccess.DatabaseAccess.getJSON;
 import static no.hiof.geire.coursesapp.dataAccess.DatabaseAccess.getMeldingArray;
 
 public class MainActivity extends AppCompatActivity implements MessageRecyclerViewAdapter.ItemClickListener{
@@ -191,7 +190,7 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
 
     private void fillRecyclerView(String URL){
 
-        jsonString = getJSON(URL);
+        //jsonString = getJSON(URL);
         ArrayList<Melding> messages = new ArrayList<>();
         try {
             messages = getMeldingArray(jsonString);
@@ -346,11 +345,6 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
             protected void onPostExecute(String s) {
                 super.onPostExecute(s);
                 Toast.makeText(getApplicationContext(), s, Toast.LENGTH_SHORT).show();
-                try {
-                    getEmneArray(s);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
             }
 
             //in this method we are fetching the json string

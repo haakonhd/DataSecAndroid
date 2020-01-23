@@ -11,9 +11,11 @@ import no.hiof.geire.coursesapp.model.Emne;
 import no.hiof.geire.coursesapp.model.Studieretning;
 
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.ResultReceiver;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -29,7 +31,6 @@ import java.net.URL;
 import java.util.ArrayList;
 
 import static no.hiof.geire.coursesapp.dataAccess.DatabaseAccess.getEmneArray;
-import static no.hiof.geire.coursesapp.dataAccess.DatabaseAccess.getJSON;
 import static no.hiof.geire.coursesapp.dataAccess.DatabaseAccess.getStudieretningArray;
 
 public class RegiActivity extends AppCompatActivity implements CourseRecyclerViewAdapter.ItemClickListener, StudyProgramRecyclerViewAdapter.ItemClickListener {
@@ -59,6 +60,8 @@ public class RegiActivity extends AppCompatActivity implements CourseRecyclerVie
         CourseTextView = findViewById(R.id.courseTextView);
         ClassEditText = findViewById(R.id.classEditText);
 
+        downloadJSON("http://158.39.188.228/api/studieretning/read.php");
+
         if(RegisterAs == 0) {
             RegisterMainTextView.setText("Registrer deg som student");
             CourseTextView.setText("Velg din studieretning");
@@ -72,6 +75,63 @@ public class RegiActivity extends AppCompatActivity implements CourseRecyclerVie
             fillCourseRecyclerView();
         }
     }
+
+
+    private void downloadJSON(final String urlWebService) {
+
+        class DownloadJSON extends AsyncTask<Void, Void, String> {
+
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+            }
+
+
+            @Override
+            protected void onPostExecute(String s) {
+                super.onPostExecute(s);
+                Toast.makeText(getApplicationContext(), s, Toast.LENGTH_LONG).show();
+                /*try {
+                    loadIntoListView(s);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }*/
+            }
+
+            @Override
+            protected String doInBackground(Void... voids) {
+                try {
+                    URL url = new URL(urlWebService);
+                    HttpURLConnection con = (HttpURLConnection) url.openConnection();
+                    StringBuilder sb = new StringBuilder();
+                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                    String json;
+                    while ((json = bufferedReader.readLine()) != null) {
+                        sb.append(json + "\n");
+                    }
+                    return sb.toString().trim();
+                } catch (Exception e) {
+                    return null;
+                }
+            }
+        }
+        DownloadJSON getJSON = new DownloadJSON();
+        getJSON.execute();
+    }
+
+    /*private void loadIntoListView(String json) throws JSONException {
+        JSONArray jsonArray = new JSONArray(json);
+        String[] stocks = new String[jsonArray.length()];
+        for (int i = 0; i < jsonArray.length(); i++) {
+            JSONObject obj = jsonArray.getJSONObject(i);
+            stocks[i] = obj.getString("name") + " " + obj.getString("price");
+        }
+        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, stocks);
+        listView.setAdapter(arrayAdapter);
+    }*/
+
+
+
     @Override
     public void onItemClick(View view, int position) {
         if(RegisterAs == 0)
@@ -82,11 +142,11 @@ public class RegiActivity extends AppCompatActivity implements CourseRecyclerVie
 
     private void fillCourseRecyclerView(){
 
-        jsonString = getJSON("https://jsonplaceholder.typicode.com/todos/1");
+        //("https://jsonplaceholder.typicode.com/todos/1");
         ArrayList<Emne> courses = new ArrayList<>();
 
         //Displaying a toast with the json string
-        Toast.makeText(this, jsonString + " ***test***test***test***", Toast.LENGTH_LONG).show();
+        //Toast.makeText(this, jsonString + " ***test***test***test***", Toast.LENGTH_LONG).show();
 
         /*try {
             courses = getEmneArray(jsonString);
@@ -104,7 +164,7 @@ public class RegiActivity extends AppCompatActivity implements CourseRecyclerVie
 
     private void fillStudyProgramRecyclerView(){
 
-        jsonString = getJSON("http://158.39.188.228/api/studieretninger/read.php");
+        //jsonString = getJSON("http://158.39.188.228/api/studieretninger/read.php");
         ArrayList<Studieretning> studyPrograms = new ArrayList<>();
         try {
             studyPrograms = getStudieretningArray(jsonString);
