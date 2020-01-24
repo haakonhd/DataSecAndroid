@@ -35,9 +35,11 @@ public class MessageRecyclerViewAdapter extends RecyclerView.Adapter<MessageRecy
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         Melding message = mData.get(position);
-        holder.messageTextView.setText(message.getInnhold());
+        holder.messageTextView.setText(message.getInnhold_melding());
         holder.authorTextView.setText(String.valueOf(message.getIdForfatter()));
-        holder.replyTextView.setText("Svar fra fagansvarlig: " + message.getInnholdSvar());
+        if(message.getInnholdSvar() != "null") {
+            holder.replyTextView.setText("Svar fra fagansvarlig: " + message.getInnholdSvar());
+        }
     }
 
     // total number of rows

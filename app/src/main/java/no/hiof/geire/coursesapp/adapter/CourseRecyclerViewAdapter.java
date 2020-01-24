@@ -17,7 +17,7 @@ public class CourseRecyclerViewAdapter extends RecyclerView.Adapter<CourseRecycl
 
     private List<Emne> mData;
     private LayoutInflater mInflater;
-    private CourseRecyclerViewAdapter.ItemClickListener mClickListener;
+    private ItemClickListener mClickListener;
 
     // data is passed into the constructor
     public CourseRecyclerViewAdapter(Context context, List<Emne> data) {

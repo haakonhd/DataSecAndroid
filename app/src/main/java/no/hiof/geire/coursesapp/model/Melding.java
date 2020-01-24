@@ -3,16 +3,16 @@ package no.hiof.geire.coursesapp.model;
 public class Melding {
 
     private int idMelding;
-    private String innhold;
+    private String innhold_melding;
     private int idForfatter;
     private String emnekode;
     private boolean rappotert;
     private int foreleser;
     private String innholdSvar;
 
-    public Melding(int idMelding, String innhold, int idForfatter, String emnekode, boolean rappotert, int foreleser, String innholdSvar) {
+    public Melding(int idMelding, String innhold_melding, int idForfatter, String emnekode, boolean rappotert, int foreleser, String innholdSvar) {
         this.idMelding = idMelding;
-        this.innhold = innhold;
+        this.innhold_melding = innhold_melding;
         this.idForfatter = idForfatter;
         this.emnekode = emnekode;
         this.rappotert = rappotert;
@@ -31,12 +31,12 @@ public class Melding {
         this.idMelding = idMelding;
     }
 
-    public String getInnhold() {
-        return innhold;
+    public String getInnhold_melding() {
+        return innhold_melding;
     }
 
-    public void setInnhold(String innhold) {
-        this.innhold = innhold;
+    public void setInnhold_melding(String innhold_melding) {
+        this.innhold_melding = innhold_melding;
     }
 
     public int getIdForfatter() {

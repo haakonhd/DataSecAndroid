@@ -2,22 +2,32 @@ package no.hiof.geire.coursesapp.model;
 
 public class Student extends Person{
 
-    private int studieretning;
+    private int idStudent;
+    private String studieretning;
     private int kull;
 
-    public Student(int idPerson, String epost, String navn, String passord, boolean godkjentBruker, int studieretning, int kull) {
+    public Student(int idPerson, String epost, String navn, String passord, boolean godkjentBruker, int idStudent, String studieretning, int kull) {
         super(idPerson, epost, navn, passord, godkjentBruker);
+        this.idStudent = idStudent;
         this.studieretning = studieretning;
         this.kull = kull;
     }
 
-    //public Student() {}
+    public Student() {}
 
-    public int getStudieretning() {
+    public int getIdStudent() {
+        return idStudent;
+    }
+
+    public void setIdStudent(int idStudent) {
+        this.idStudent = idStudent;
+    }
+
+    public String getStudieretning() {
         return studieretning;
     }
 
-    public void setStudieretning(int studieretning) {
+    public void setStudieretning(String studieretning) {
         this.studieretning = studieretning;
     }
 

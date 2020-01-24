@@ -16,7 +16,7 @@ public class LecturerRecyclerViewAdapter extends RecyclerView.Adapter<LecturerRe
 
     private List<Foreleser> mData;
     private LayoutInflater mInflater;
-    private LecturerRecyclerViewAdapter.ItemClickListener mClickListener;
+    private ItemClickListener mClickListener;
 
     // data is passed into the constructor
     public LecturerRecyclerViewAdapter(Context context, List<Foreleser> data) {
@@ -26,9 +26,9 @@ public class LecturerRecyclerViewAdapter extends RecyclerView.Adapter<LecturerRe
 
     // inflates the row layout from xml when needed
     @Override
-    public LecturerRecyclerViewAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = mInflater.inflate(R.layout.lecturer_item, parent, false);
-        return new LecturerRecyclerViewAdapter.ViewHolder(view);
+        return new ViewHolder(view);
     }
 
     // binds the data to the TextView in each row

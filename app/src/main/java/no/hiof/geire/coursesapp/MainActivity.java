@@ -4,8 +4,12 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import no.hiof.geire.coursesapp.adapter.CourseRecyclerViewAdapter;
+import no.hiof.geire.coursesapp.adapter.LecturerRecyclerViewAdapter;
 import no.hiof.geire.coursesapp.adapter.MessageRecyclerViewAdapter;
+import no.hiof.geire.coursesapp.adapter.StudyProgramRecyclerViewAdapter;
 import no.hiof.geire.coursesapp.model.Emne;
+import no.hiof.geire.coursesapp.model.Foreleser;
 import no.hiof.geire.coursesapp.model.Melding;
 import no.hiof.geire.coursesapp.dataAccess.DatabaseAccess;
 import no.hiof.geire.coursesapp.model.Studieretning;
@@ -43,6 +47,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import static no.hiof.geire.coursesapp.dataAccess.DatabaseAccess.getEmneArray;
+import static no.hiof.geire.coursesapp.dataAccess.DatabaseAccess.getForeleserArray;
 import static no.hiof.geire.coursesapp.dataAccess.DatabaseAccess.getMeldingArray;
 
 public class MainActivity extends AppCompatActivity implements MessageRecyclerViewAdapter.ItemClickListener{
@@ -56,14 +62,23 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
     static final int REQUEST_IMAGE_CAPTURE = 1;
     Bitmap imageBitmap;
 
-    Integer SignedInAs;
-    String jsonString, mText;
+    Integer SignedInAs, id;
+    String jsonStringForelesere, jsonStringPersoner, jsonStringEmner, mText;
+
+    MessageRecyclerViewAdapter messageAdapter;
+    LecturerRecyclerViewAdapter lecturerAdapter;
+    CourseRecyclerViewAdapter courseAdapter;
 
     @SuppressLint("SetTextI18n")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        downloadForelesereJSON("http://158.39.188.228/api/person/read.php");
+        downloadPersonerJSON("http://158.39.188.228/api/foreleser/read.php");
+        downloadMeldingerJSON("http://158.39.188.228/api/melding/read.php");
+        downloadEmnerJSON("http://158.39.188.228/api/emne/read.php");
 
         StatusTextView = findViewById(R.id.statusTextView);
         GoToSignInBtn = findViewById(R.id.goToSignInBtn);
@@ -76,6 +91,7 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         AddSubjectBtn = findViewById(R.id.addSubjectBtn);
         TakePicureBtn = findViewById(R.id.takePicureBtn);
         ImageView = findViewById(R.id.imageView);
+
 
         if (savedInstanceState != null) {
             imageBitmap = savedInstanceState.getParcelable("pic");
@@ -108,7 +124,7 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         SendMessageBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //fillRecyclerView("http://158.39.188.228/api/melding/read.php");
+                fillEmnerRecyclerView("http://158.39.188.228/api/melding/read.php");
                 //Check chosen subject(emne)
                 //Open messageBox and create message
                 inputMessageDialogBox();
@@ -137,6 +153,7 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
 
         Intent intent = getIntent();
         SignedInAs = intent.getIntExtra("logged in as", 0);
+        id = intent.getIntExtra("id", 0);
 
         GoToSignInBtn.setVisibility(View.INVISIBLE);
         PinInfoTextView.setVisibility(View.INVISIBLE);
@@ -155,7 +172,7 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
             EnterPinTextView.setVisibility(View.VISIBLE);
             PinInfoTextView.setVisibility(View.VISIBLE);
             ConfirmPinBtn.setVisibility(View.VISIBLE);
-            //fillRecyclerView("http://158.39.188.228/api/melding/read.php");
+            downloadMeldingerJSON("http://158.39.188.228/api/melding/read.php");
         }
 
         if(SignedInAs == 1) {
@@ -173,14 +190,14 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         }
         if(SignedInAs == 3) {
             StatusTextView.setText("Logged in as admin");
-            //fillRecyclerView();
+            fillForelesereRecyclerView();
         }
     }
 
 
     @Override
     public void onItemClick(View view, int position) {
-        Toast.makeText(this, "You clicked " + adapter.getItem(position) + " on row number " + position, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "You clicked " + messageAdapter.getItem(position) + " on row number " + position, Toast.LENGTH_SHORT).show();
     }
 
     private void openSignInActivity() {
@@ -188,9 +205,8 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         startActivity(intent);
     }
 
-    private void fillRecyclerView(String URL){
+    private void fillMeldingerRecyclerView(String jsonString){
 
-        //jsonString = getJSON(URL);
         ArrayList<Melding> messages = new ArrayList<>();
         try {
             messages = getMeldingArray(jsonString);
@@ -201,9 +217,49 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         // set up the RecyclerView
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new MessageRecyclerViewAdapter(this, messages);
-        adapter.setClickListener(this);
-        recyclerView.setAdapter(adapter);
+        messageAdapter = new MessageRecyclerViewAdapter(this, messages);
+        messageAdapter.setClickListener(this);
+        recyclerView.setAdapter(messageAdapter);
+    }
+
+    private void fillEmnerRecyclerView(String jsonString){
+
+        ArrayList<Emne> courses = new ArrayList<>();
+        try {
+            courses = getEmneArray(jsonString);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        // set up the RecyclerView
+        RecyclerView recyclerView = findViewById(R.id.recyclerView);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        courseAdapter = new CourseRecyclerViewAdapter(this, courses);
+        courseAdapter.setClickListener((CourseRecyclerViewAdapter.ItemClickListener) this);
+        recyclerView.setAdapter(courseAdapter);
+    }
+
+    private void fillForelesereRecyclerView(){
+
+        ArrayList<Foreleser> lecturer = new ArrayList<>();
+        try {
+            lecturer = getForeleserArray(jsonStringForelesere);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        // set up the RecyclerView
+        RecyclerView recyclerView = findViewById(R.id.recyclerView);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        lecturerAdapter = new LecturerRecyclerViewAdapter(this, lecturer);
+        lecturerAdapter.setClickListener((LecturerRecyclerViewAdapter.ItemClickListener) this);
+        recyclerView.setAdapter(lecturerAdapter);
+    }
+
+    // fixes problem with two setClickListeners
+    @Override
+    public void onPointerCaptureChanged(boolean hasCapture) {
+
     }
 
     //---------------------------DialogBoxes------------------------------------------------------------------------------------------
@@ -289,104 +345,156 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
     }
 
 
+    //-------------------Database stuff-------------------------------------------------------------------------------------------------------
 
 
+    private void downloadMeldingerJSON(final String urlWebService) {
 
+        class DownloadJSON extends AsyncTask<Void, Void, String> {
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    /*private void getJSON(final String urlWebService) {
-        *//*
-         * As fetching the json string is a network operation
-         * And we cannot perform a network operation in main thread
-         * so we need an AsyncTask
-         * The constrains defined here are
-         * Void -> We are not passing anything
-         * Void -> Nothing at progress update as well
-         * String -> After completion it should return a string and it will be the json string
-         * *//*
-        class GetJSON extends AsyncTask<Void, Void, String> {
-
-            //this method will be called before execution
-            //you can display a progress bar or something
-            //so that user can understand that he should wait
-            //as network operation may take some time
             @Override
             protected void onPreExecute() {
                 super.onPreExecute();
             }
 
-            //this method will be called after execution
-            //so here we are displaying a toast with the json string
+
             @Override
             protected void onPostExecute(String s) {
                 super.onPostExecute(s);
-                Toast.makeText(getApplicationContext(), s, Toast.LENGTH_SHORT).show();
+                fillMeldingerRecyclerView(s);
             }
 
-            //in this method we are fetching the json string
             @Override
             protected String doInBackground(Void... voids) {
-
-
-
                 try {
-                    //creating a URL
                     URL url = new URL(urlWebService);
-
-                    //Opening the URL using HttpURLConnection
                     HttpURLConnection con = (HttpURLConnection) url.openConnection();
-
-                    //StringBuilder object to read the string from the service
                     StringBuilder sb = new StringBuilder();
-
-                    //We will use a buffered reader to read the string from service
                     BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(con.getInputStream()));
-
-                    //A simple string to read values from each line
                     String json;
-
-                    //reading until we don't find null
                     while ((json = bufferedReader.readLine()) != null) {
-
-                        //appending it to string builder
                         sb.append(json + "\n");
                     }
-
-                    //finally returning the read string
                     return sb.toString().trim();
                 } catch (Exception e) {
                     return null;
                 }
-
             }
         }
-
-        //creating asynctask object and executing it
-        GetJSON getJSON = new GetJSON();
+        DownloadJSON getJSON = new DownloadJSON();
         getJSON.execute();
-    }*/
+    }
+
+    private void downloadForelesereJSON(final String urlWebService) {
+
+        class DownloadJSON extends AsyncTask<Void, Void, String> {
+
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+            }
+
+
+            @Override
+            protected void onPostExecute(String s) {
+                super.onPostExecute(s);
+                jsonStringForelesere = s;
+            }
+
+            @Override
+            protected String doInBackground(Void... voids) {
+                try {
+                    URL url = new URL(urlWebService);
+                    HttpURLConnection con = (HttpURLConnection) url.openConnection();
+                    StringBuilder sb = new StringBuilder();
+                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                    String json;
+                    while ((json = bufferedReader.readLine()) != null) {
+                        sb.append(json + "\n");
+                    }
+                    return sb.toString().trim();
+                } catch (Exception e) {
+                    return null;
+                }
+            }
+        }
+        DownloadJSON getJSON = new DownloadJSON();
+        getJSON.execute();
+    }
+
+    private void downloadPersonerJSON(final String urlWebService) {
+
+        class DownloadJSON extends AsyncTask<Void, Void, String> {
+
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+            }
+
+
+            @Override
+            protected void onPostExecute(String s) {
+                super.onPostExecute(s);
+                jsonStringPersoner = s;
+            }
+
+            @Override
+            protected String doInBackground(Void... voids) {
+                try {
+                    URL url = new URL(urlWebService);
+                    HttpURLConnection con = (HttpURLConnection) url.openConnection();
+                    StringBuilder sb = new StringBuilder();
+                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                    String json;
+                    while ((json = bufferedReader.readLine()) != null) {
+                        sb.append(json + "\n");
+                    }
+                    return sb.toString().trim();
+                } catch (Exception e) {
+                    return null;
+                }
+            }
+        }
+        DownloadJSON getJSON = new DownloadJSON();
+        getJSON.execute();
+    }
+
+    private void downloadEmnerJSON(final String urlWebService) {
+
+        class DownloadJSON extends AsyncTask<Void, Void, String> {
+
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+            }
+
+
+            @Override
+            protected void onPostExecute(String s) {
+                super.onPostExecute(s);
+                jsonStringEmner = s;
+            }
+
+            @Override
+            protected String doInBackground(Void... voids) {
+                try {
+                    URL url = new URL(urlWebService);
+                    HttpURLConnection con = (HttpURLConnection) url.openConnection();
+                    StringBuilder sb = new StringBuilder();
+                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                    String json;
+                    while ((json = bufferedReader.readLine()) != null) {
+                        sb.append(json + "\n");
+                    }
+                    return sb.toString().trim();
+                } catch (Exception e) {
+                    return null;
+                }
+            }
+        }
+        DownloadJSON getJSON = new DownloadJSON();
+        getJSON.execute();
+    }
+
+
 }

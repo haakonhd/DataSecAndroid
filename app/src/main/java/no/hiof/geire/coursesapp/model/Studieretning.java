@@ -2,10 +2,10 @@ package no.hiof.geire.coursesapp.model;
 
 public class Studieretning {
 
-    private int idStudieretning;
+    private String idStudieretning;
     private String studieretningNavn;
 
-    public Studieretning(int idStudieretning, String studieretningNavn) {
+    public Studieretning(String idStudieretning, String studieretningNavn) {
         this.idStudieretning = idStudieretning;
         this.studieretningNavn = studieretningNavn;
     }
@@ -14,11 +14,11 @@ public class Studieretning {
     }
 
 
-    public int getIdStudieretning() {
+    public String getIdStudieretning() {
         return idStudieretning;
     }
 
-    public void setIdStudieretning(int idStudieretning) {
+    public void setIdStudieretning(String idStudieretning) {
         this.idStudieretning = idStudieretning;
     }
 

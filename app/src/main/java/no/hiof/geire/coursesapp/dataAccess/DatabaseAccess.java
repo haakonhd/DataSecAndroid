@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import no.hiof.geire.coursesapp.model.Emne;
 import no.hiof.geire.coursesapp.model.Foreleser;
 import no.hiof.geire.coursesapp.model.Melding;
+import no.hiof.geire.coursesapp.model.Person;
+import no.hiof.geire.coursesapp.model.Student;
 import no.hiof.geire.coursesapp.model.Studieretning;
 
 public class DatabaseAccess {
@@ -24,8 +26,8 @@ public class DatabaseAccess {
 
     public static ArrayList<Melding> getMeldingArray (String json) throws JSONException {
         //creating a json array from the json string
-        JSONArray jsonArray = new JSONArray(json);
-
+        JSONObject jsnobject = new JSONObject(json);
+        JSONArray jsonArray = jsnobject.getJSONArray("meldinger");
         ArrayList<Melding> messages = new ArrayList<>();
 
         //looping through all the elements in json array
@@ -35,8 +37,8 @@ public class DatabaseAccess {
             JSONObject obj= jsonArray.getJSONObject(i);
 
             //getting the data from the json object and putting it inside object array
-            Melding message = new Melding(obj.getInt("idMelding"), obj.getString("innhold"), obj.getInt("idForfatter"),
-                    obj.getString("emnekode"), obj.getBoolean("rappotert"), obj.getInt("foreleser"), obj.getString("innholdSvar"));
+            Melding message = new Melding(obj.optInt("idMelding"), obj.optString("innhold_melding"), obj.optInt("idForfatter"),
+                    obj.optString("emnekode"), obj.optBoolean("rapportert"), obj.optInt("foreleser"), obj.optString("innhold_svar"));
             messages.add(message);
         }
 
@@ -69,8 +71,8 @@ public class DatabaseAccess {
 
     public static ArrayList<Studieretning> getStudieretningArray (String json) throws JSONException {
         //creating a json array from the json string
-        JSONArray jsonArray = new JSONArray(json);
-
+        JSONObject jsnobject = new JSONObject(json);
+        JSONArray jsonArray = jsnobject.getJSONArray("studieretninger");
         ArrayList<Studieretning> studyPrograms = new ArrayList<>();
 
         //looping through all the elements in json array
@@ -80,7 +82,7 @@ public class DatabaseAccess {
             JSONObject obj= jsonArray.getJSONObject(i);
 
             //getting the data from the json object and putting it inside object array
-            Studieretning studyProgram = new Studieretning(obj.getInt("idStudieretning"), obj.getString("studieretningNavn"));
+            Studieretning studyProgram = new Studieretning(obj.optString("idStudieretning"), obj.optString("navn_studieretning"));
             studyPrograms.add(studyProgram);
         }
 
@@ -89,8 +91,8 @@ public class DatabaseAccess {
 
     public static ArrayList<Foreleser> getForeleserArray (String json) throws JSONException {
         //creating a json array from the json string
-        JSONArray jsonArray = new JSONArray(json);
-
+        JSONObject jsnobject = new JSONObject(json);
+        JSONArray jsonArray = jsnobject.getJSONArray("forelesere");
         ArrayList<Foreleser> lecturers = new ArrayList<>();
 
         //looping through all the elements in json array
@@ -100,11 +102,57 @@ public class DatabaseAccess {
             JSONObject obj= jsonArray.getJSONObject(i);
 
             //getting the data from the json object and putting it inside object array
-            Foreleser lecturer = new Foreleser(obj.getInt("idPerson"), obj.getString("epost"), obj.getString("navn"),
-                    obj.getString("password"), obj.getBoolean("godkjentBruker"), obj.getString("bildeURL"));
+            Foreleser lecturer = new Foreleser();
+            lecturer.setIdForeleser(obj.optInt("idForeleser"));
+            lecturer.setBildeURL(obj.optString("bilde"));
+
             lecturers.add(lecturer);
         }
 
         return lecturers;
+    }
+
+    public static ArrayList<Student> getStudentArray (String json) throws JSONException {
+        //creating a json array from the json string
+        JSONObject jsnobject = new JSONObject(json);
+        JSONArray jsonArray = jsnobject.getJSONArray("studenter");
+        ArrayList<Student> students = new ArrayList<>();
+
+        //looping through all the elements in json array
+        for (int i = 0; i < jsonArray.length(); i++) {
+
+            //getting json object from the json array
+            JSONObject obj= jsonArray.getJSONObject(i);
+
+            //getting the data from the json object and putting it inside object array
+            Student student = new Student();
+            student.setIdStudent(obj.optInt("idStudent"));
+            student.setKull(obj.optInt("kull"));
+            student.setStudieretning(obj.optString("studieretning"));
+            students.add(student);
+        }
+
+        return students;
+    }
+
+    public static ArrayList<Person> getPersonArray (String json) throws JSONException {
+        //creating a json array from the json string
+        JSONObject jsnobject = new JSONObject(json);
+        JSONArray jsonArray = jsnobject.getJSONArray("personer");
+        ArrayList<Person> persons = new ArrayList<>();
+
+        //looping through all the elements in json array
+        for (int i = 0; i < jsonArray.length(); i++) {
+
+            //getting json object from the json array
+            JSONObject obj= jsonArray.getJSONObject(i);
+
+            //getting the data from the json object and putting it inside object array
+            Person person = new Person(obj.optInt("idPerson"), obj.optString("epost"), obj.optString("navn"),
+                    obj.optString("passord"), obj.optBoolean("godkjent_bruker"));
+            persons.add(person);
+        }
+
+        return persons;
     }
 }

@@ -64,66 +64,15 @@ public class RegiActivity extends AppCompatActivity implements CourseRecyclerVie
             RegisterMainTextView.setText("Registrer deg som student");
             CourseTextView.setText("Velg din studieretning");
             ClassEditText.setVisibility(View.VISIBLE);
-            //fillStudyProgramRecyclerView();
+            downloadStudieretningerJSON("http://158.39.188.228/api/studieretning/read.php");
         }
         else if(RegisterAs == 1) {
             RegisterMainTextView.setText("Registrer deg som foreleser");
             CourseTextView.setText("Velg et kurs du har hovedansvaret for");
             ClassEditText.setVisibility(View.INVISIBLE);
-            downloadJSON("http://158.39.188.228/api/emne/read.php");
+            downloadEmnerJSON("http://158.39.188.228/api/emne/read.php");
         }
     }
-
-
-    private void downloadJSON(final String urlWebService) {
-
-        class DownloadJSON extends AsyncTask<Void, Void, String> {
-
-            @Override
-            protected void onPreExecute() {
-                super.onPreExecute();
-            }
-
-
-            @Override
-            protected void onPostExecute(String s) {
-                super.onPostExecute(s);
-                Toast.makeText(getApplicationContext(), s, Toast.LENGTH_LONG).show();
-                fillCourseRecyclerView(s);
-            }
-
-            @Override
-            protected String doInBackground(Void... voids) {
-                try {
-                    URL url = new URL(urlWebService);
-                    HttpURLConnection con = (HttpURLConnection) url.openConnection();
-                    StringBuilder sb = new StringBuilder();
-                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(con.getInputStream()));
-                    String json;
-                    while ((json = bufferedReader.readLine()) != null) {
-                        sb.append(json + "\n");
-                    }
-                    return sb.toString().trim();
-                } catch (Exception e) {
-                    return null;
-                }
-            }
-        }
-        DownloadJSON getJSON = new DownloadJSON();
-        getJSON.execute();
-    }
-
-    /*private void loadIntoListView(String json) throws JSONException {
-        JSONArray jsonArray = new JSONArray(json);
-        String[] stocks = new String[jsonArray.length()];
-        for (int i = 0; i < jsonArray.length(); i++) {
-            JSONObject obj = jsonArray.getJSONObject(i);
-            stocks[i] = obj.getString("name") + " " + obj.getString("price");
-        }
-        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, stocks);
-        listView.setAdapter(arrayAdapter);
-    }*/
-
 
 
     @Override
@@ -152,14 +101,13 @@ public class RegiActivity extends AppCompatActivity implements CourseRecyclerVie
         recyclerView.setAdapter(courseAdapter);
     }
 
-    private void fillStudyProgramRecyclerView(){
+    private void fillStudyProgramRecyclerView(String jsonString){
 
-        //jsonString = getJSON("http://158.39.188.228/api/studieretninger/read.php");
         ArrayList<Studieretning> studyPrograms = new ArrayList<>();
         try {
             studyPrograms = getStudieretningArray(jsonString);
         } catch (JSONException e) {
-            e.printStackTrace();
+            Toast.makeText(this, "getStudieretningArray fail", Toast.LENGTH_SHORT).show();
         }
 
         // set up the RecyclerView
@@ -174,5 +122,83 @@ public class RegiActivity extends AppCompatActivity implements CourseRecyclerVie
     @Override
     public void onPointerCaptureChanged(boolean hasCapture) {
 
+    }
+
+
+
+
+
+    private void downloadEmnerJSON(final String urlWebService) {
+
+        class DownloadJSON extends AsyncTask<Void, Void, String> {
+
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+            }
+
+
+            @Override
+            protected void onPostExecute(String s) {
+                super.onPostExecute(s);
+                fillCourseRecyclerView(s);
+            }
+
+            @Override
+            protected String doInBackground(Void... voids) {
+                try {
+                    URL url = new URL(urlWebService);
+                    HttpURLConnection con = (HttpURLConnection) url.openConnection();
+                    StringBuilder sb = new StringBuilder();
+                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                    String json;
+                    while ((json = bufferedReader.readLine()) != null) {
+                        sb.append(json + "\n");
+                    }
+                    return sb.toString().trim();
+                } catch (Exception e) {
+                    return null;
+                }
+            }
+        }
+        DownloadJSON getJSON = new DownloadJSON();
+        getJSON.execute();
+    }
+
+    private void downloadStudieretningerJSON(final String urlWebService) {
+
+        class DownloadJSON extends AsyncTask<Void, Void, String> {
+
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+            }
+
+
+            @Override
+            protected void onPostExecute(String s) {
+                super.onPostExecute(s);
+                fillStudyProgramRecyclerView(s);
+            }
+
+            @Override
+            protected String doInBackground(Void... voids) {
+                try {
+                    URL url = new URL(urlWebService);
+                    HttpURLConnection con = (HttpURLConnection) url.openConnection();
+                    StringBuilder sb = new StringBuilder();
+                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                    String json;
+                    while ((json = bufferedReader.readLine()) != null) {
+                        sb.append(json + "\n");
+                    }
+                    return sb.toString().trim();
+                } catch (Exception e) {
+                    return null;
+                }
+            }
+        }
+        DownloadJSON getJSON = new DownloadJSON();
+        getJSON.execute();
     }
 }
