@@ -27,6 +27,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.InputType;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -38,16 +39,25 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+
+import com.google.gson.Gson;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static no.hiof.geire.coursesapp.dataAccess.DatabaseAccess.getEmneArray;
@@ -126,8 +136,8 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         MessageReplyBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //Check chosen message
-                //Open replyBox and apply reply
+                ArrayList<Melding> messages = getMessages();
+                fillMeldingerRecyclerView(messages);
             }
         });
 
@@ -207,10 +217,15 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
             Toast.makeText(this, "You clicked " + messageAdapter.getItem(position) + " on row number " + position, Toast.LENGTH_SHORT).show();
         }
         else if(SignedInAs == 1){
-            Toast.makeText(this, "You clicked " + courseAdapter.getItem(position) + " on row number " + position, Toast.LENGTH_SHORT).show();
+            String emnekode = courseAdapter.getItem(position).getEmnekode();
+            int foreleser = courseAdapter.getItem(position).getForeleser();
+            inputMessageDialogBox(emnekode, foreleser);
         }
         else if(SignedInAs == 2){
-            Toast.makeText(this, "You clicked " + courseAdapter.getItem(position) + " on row number " + position, Toast.LENGTH_SHORT).show();
+            String emnekode = messageAdapter.getItem(position).getEmnekode();
+            int student = messageAdapter.getItem(position).getIdForfatter();
+            String innholdMelding = messageAdapter.getItem(position).getInnhold_melding();
+            inputReplyDialogBox(emnekode, student, innholdMelding);
         }
     }
 
@@ -259,7 +274,7 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
 
         for (int i = 0; i < personsHasCourses.size(); i++){
 
-            if(id == personsHasCourses.get(i).getIdPerson()){
+            if(id == personsHasCourses.get(i).getIdPerson() && !personsHasCourses.get(i).isTilgangTilEmne()){
 
                 for(int x = 0; x < courses.size(); x++){
 
@@ -272,14 +287,41 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         return studentsCourses;
     }
 
-    private void fillMeldingerRecyclerView(String jsonString){
-
+    private ArrayList<Melding> getMessages(){
+        ArrayList<Melding> allMessages = new ArrayList<>();
+        ArrayList<Emne> courses = new ArrayList<>();
         ArrayList<Melding> messages = new ArrayList<>();
+
+
         try {
-            messages = getMeldingArray(jsonString);
+            courses = getEmneArray(jsonStringEmner);
         } catch (JSONException e) {
             e.printStackTrace();
         }
+
+        try {
+            allMessages = getMeldingArray(jsonStringMeldinger);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        for (int i = 0; i < courses.size(); i++){
+
+            if(id == courses.get(i).getForeleser()){
+
+                for(int x = 0; x < allMessages.size(); x++){
+
+                    if(allMessages.get(x).getEmnekode().equals(courses.get(i).getEmnekode())){
+                        messages.add(allMessages.get(x));
+                    }
+                }
+            }
+        }
+
+        return messages;
+    }
+
+    private void fillMeldingerRecyclerView(ArrayList<Melding> messages){
 
         // set up the RecyclerView
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
@@ -339,9 +381,109 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
 
     }
 
+    private void sendMessage(String mText, String emnekode, Integer foreleser) throws JSONException {
+        String json = "";
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.accumulate("emnekode", emnekode);
+        jsonObject.accumulate("idForeleser", foreleser.toString());
+        jsonObject.accumulate("idForfatter", id.toString());
+        jsonObject.accumulate("innhold_melding", mText);
+        jsonObject.accumulate("innhold_svar", JSONObject.NULL.toString());
+        jsonObject.accumulate("rapportert", false);
+
+        json = jsonObject.toString();
+
+        sendPost(json);
+    }
+
+    private void sendReply(String mText, String emnekode, Integer idStudent, String innholdMelding) throws JSONException {
+        String json = "";
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.accumulate("emnekode", emnekode);
+        jsonObject.accumulate("idForeleser", id.toString());
+        jsonObject.accumulate("idForfatter", idStudent.toString());
+        jsonObject.accumulate("innhold_melding", innholdMelding);
+        jsonObject.accumulate("innhold_svar", mText);
+        jsonObject.accumulate("rapportert", false);
+
+        json = jsonObject.toString();
+
+        updatePost(json);
+    }
+
+    public void updatePost(final String json){
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    URL url = new URL("http://158.39.188.228/api/melding/update.php");
+                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("POST");
+                    conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+                    conn.setRequestProperty("Accept","application/json");
+                    conn.setDoOutput(true);
+                    conn.setDoInput(true);
+
+                    Log.i("JSON", json);
+                    DataOutputStream os = new DataOutputStream(conn.getOutputStream());
+                    //os.writeBytes(URLEncoder.encode(jsonParam.toString(), "UTF-8"));
+                    os.writeBytes(json);
+
+                    os.flush();
+                    os.close();
+
+                    Log.i("STATUS", String.valueOf(conn.getResponseCode()));
+                    Log.i("MSG" , conn.getResponseMessage());
+
+                    conn.disconnect();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        thread.start();
+    }
+
+    public void sendPost(final String json) {
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    URL url = new URL("http://158.39.188.228/api/melding/create.php");
+                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("POST");
+                    conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+                    conn.setRequestProperty("Accept","application/json");
+                    conn.setDoOutput(true);
+                    conn.setDoInput(true);
+
+                    Log.i("JSON", json);
+                    DataOutputStream os = new DataOutputStream(conn.getOutputStream());
+                    //os.writeBytes(URLEncoder.encode(jsonParam.toString(), "UTF-8"));
+                    os.writeBytes(json);
+
+                    os.flush();
+                    os.close();
+
+                    Log.i("STATUS", String.valueOf(conn.getResponseCode()));
+                    Log.i("MSG" , conn.getResponseMessage());
+
+                    conn.disconnect();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        thread.start();
+    }
+
     //---------------------------DialogBoxes------------------------------------------------------------------------------------------
 
-    private void inputMessageDialogBox(){
+    private void inputMessageDialogBox(final String emnekode, final int foreleser){
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Enter message");
 
@@ -356,6 +498,43 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 mText = input.getText().toString();
+                try {
+                    sendMessage(mText, emnekode, foreleser);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+
+        builder.show();
+    }
+
+    private void inputReplyDialogBox(final String emnekode, final int idStudent, final String innholdMelding){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Enter reply");
+
+        // Set up the input
+        final EditText input = new EditText(this);
+        // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        builder.setView(input);
+
+        // Set up the buttons
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                mText = input.getText().toString();
+                try {
+                    sendReply(mText, emnekode, idStudent, innholdMelding);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {

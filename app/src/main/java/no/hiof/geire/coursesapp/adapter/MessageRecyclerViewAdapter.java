@@ -37,8 +37,8 @@ public class MessageRecyclerViewAdapter extends RecyclerView.Adapter<MessageRecy
         Melding message = mData.get(position);
         holder.messageTextView.setText(message.getInnhold_melding());
         holder.authorTextView.setText(String.valueOf(message.getIdForfatter()));
-        if(message.getInnholdSvar() != "null") {
-            holder.replyTextView.setText("Svar fra fagansvarlig: " + message.getInnholdSvar());
+        if(message.getInnhold_svar() != "null") {
+            holder.replyTextView.setText("Svar fra fagansvarlig: " + message.getInnhold_svar());
         }
     }
 

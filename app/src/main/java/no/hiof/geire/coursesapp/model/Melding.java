@@ -7,20 +7,29 @@ public class Melding {
     private int idForfatter;
     private String emnekode;
     private boolean rappotert;
-    private int foreleser;
-    private String innholdSvar;
+    private Integer idForeleser;
+    private String innhold_svar;
 
-    public Melding(int idMelding, String innhold_melding, int idForfatter, String emnekode, boolean rappotert, int foreleser, String innholdSvar) {
+    public Melding(String innhold_melding, int idForfatter, String emnekode, boolean rappotert, Integer idForeleser, String innhold_svar) {
+        this.innhold_melding = innhold_melding;
+        this.idForfatter = idForfatter;
+        this.emnekode = emnekode;
+        this.rappotert = rappotert;
+        this.idForeleser = idForeleser;
+        this.innhold_svar = innhold_svar;
+    }
+
+    public Melding() {
+    }
+
+    public Melding(int idMelding, String innhold_melding, int idForfatter, String emnekode, boolean rappotert, Integer idForeleser, String innhold_svar) {
         this.idMelding = idMelding;
         this.innhold_melding = innhold_melding;
         this.idForfatter = idForfatter;
         this.emnekode = emnekode;
         this.rappotert = rappotert;
-        this.foreleser = foreleser;
-        this.innholdSvar = innholdSvar;
-    }
-
-    public Melding() {
+        this.idForeleser = idForeleser;
+        this.innhold_svar = innhold_svar;
     }
 
     public int getIdMelding() {
@@ -63,19 +72,19 @@ public class Melding {
         this.rappotert = rappotert;
     }
 
-    public int getForeleser() {
-        return foreleser;
+    public int getIdForeleser() {
+        return idForeleser;
     }
 
-    public void setForeleser(int foreleser) {
-        this.foreleser = foreleser;
+    public void setIdForeleser(int idForeleser) {
+        this.idForeleser = idForeleser;
     }
 
-    public String getInnholdSvar() {
-        return innholdSvar;
+    public String getInnhold_svar() {
+        return innhold_svar;
     }
 
-    public void setInnholdSvar(String innholdSvar) {
-        this.innholdSvar = innholdSvar;
+    public void setInnhold_svar(String innholdSvar) {
+        this.innhold_svar = innhold_svar;
     }
 }

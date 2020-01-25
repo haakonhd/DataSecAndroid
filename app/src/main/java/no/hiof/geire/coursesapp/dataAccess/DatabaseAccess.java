@@ -160,7 +160,7 @@ public class DatabaseAccess {
     public static ArrayList<PersonHarEmne> getPersonHarEmneArray (String json) throws JSONException {
         //creating a json array from the json string
         JSONObject jsnobject = new JSONObject(json);
-        JSONArray jsonArray = jsnobject.getJSONArray("personer");
+        JSONArray jsonArray = jsnobject.getJSONArray("person_har_emne");
         ArrayList<PersonHarEmne> personsHasCourses = new ArrayList<>();
 
         //looping through all the elements in json array
