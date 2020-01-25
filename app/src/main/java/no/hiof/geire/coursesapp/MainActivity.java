@@ -12,6 +12,7 @@ import no.hiof.geire.coursesapp.model.Emne;
 import no.hiof.geire.coursesapp.model.Foreleser;
 import no.hiof.geire.coursesapp.model.Melding;
 import no.hiof.geire.coursesapp.dataAccess.DatabaseAccess;
+import no.hiof.geire.coursesapp.model.PersonHarEmne;
 import no.hiof.geire.coursesapp.model.Studieretning;
 
 import android.Manifest;
@@ -50,20 +51,19 @@ import java.util.List;
 import static no.hiof.geire.coursesapp.dataAccess.DatabaseAccess.getEmneArray;
 import static no.hiof.geire.coursesapp.dataAccess.DatabaseAccess.getForeleserArray;
 import static no.hiof.geire.coursesapp.dataAccess.DatabaseAccess.getMeldingArray;
+import static no.hiof.geire.coursesapp.dataAccess.DatabaseAccess.getPersonHarEmneArray;
 
-public class MainActivity extends AppCompatActivity implements MessageRecyclerViewAdapter.ItemClickListener{
+public class MainActivity extends AppCompatActivity implements MessageRecyclerViewAdapter.ItemClickListener, CourseRecyclerViewAdapter.ItemClickListener, LecturerRecyclerViewAdapter.ItemClickListener{
 
     private Button GoToSignInBtn, ConfirmPinBtn, MessageReplyBtn, SendMessageBtn, ChangePasswordBtn, AddSubjectBtn, TakePicureBtn;
     private TextView StatusTextView, EnterPinTextView, PinInfoTextView;
     ImageView ImageView;
 
-    MessageRecyclerViewAdapter adapter;
-
     static final int REQUEST_IMAGE_CAPTURE = 1;
     Bitmap imageBitmap;
 
     Integer SignedInAs, id;
-    String jsonStringForelesere, jsonStringPersoner, jsonStringEmner, mText;
+    String jsonStringForelesere, jsonStringPersoner, jsonStringEmner, jsonStringPersonHarEmne, jsonStringMeldinger, mText;
 
     MessageRecyclerViewAdapter messageAdapter;
     LecturerRecyclerViewAdapter lecturerAdapter;
@@ -75,10 +75,15 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        downloadForelesereJSON("http://158.39.188.228/api/person/read.php");
-        downloadPersonerJSON("http://158.39.188.228/api/foreleser/read.php");
+        Intent intent = getIntent();
+        SignedInAs = intent.getIntExtra("logged in as", 0);
+        id = intent.getIntExtra("id", 0);
+
         downloadMeldingerJSON("http://158.39.188.228/api/melding/read.php");
+        downloadForelesereJSON("http://158.39.188.228/api/foreleser/read.php");
+        downloadPersonerJSON("http://158.39.188.228/api/person/read.php");
         downloadEmnerJSON("http://158.39.188.228/api/emne/read.php");
+        downloadPersonHarEmneJSON("http://158.39.188.228/api/person_har_emne/read.php");
 
         StatusTextView = findViewById(R.id.statusTextView);
         GoToSignInBtn = findViewById(R.id.goToSignInBtn);
@@ -124,10 +129,11 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         SendMessageBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                fillEmnerRecyclerView("http://158.39.188.228/api/melding/read.php");
+                ArrayList<Emne> emner = getLoggedInStudentsCourses();
+                fillStudentsEmnerRecyclerView(emner);
                 //Check chosen subject(emne)
                 //Open messageBox and create message
-                inputMessageDialogBox();
+                //inputMessageDialogBox();
                 //Create Melding in database
             }
         });
@@ -151,10 +157,6 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
             }
         });
 
-        Intent intent = getIntent();
-        SignedInAs = intent.getIntExtra("logged in as", 0);
-        id = intent.getIntExtra("id", 0);
-
         GoToSignInBtn.setVisibility(View.INVISIBLE);
         PinInfoTextView.setVisibility(View.INVISIBLE);
         EnterPinTextView.setVisibility(View.INVISIBLE);
@@ -172,7 +174,6 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
             EnterPinTextView.setVisibility(View.VISIBLE);
             PinInfoTextView.setVisibility(View.VISIBLE);
             ConfirmPinBtn.setVisibility(View.VISIBLE);
-            downloadMeldingerJSON("http://158.39.188.228/api/melding/read.php");
         }
 
         if(SignedInAs == 1) {
@@ -197,12 +198,52 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
 
     @Override
     public void onItemClick(View view, int position) {
-        Toast.makeText(this, "You clicked " + messageAdapter.getItem(position) + " on row number " + position, Toast.LENGTH_SHORT).show();
+        if(SignedInAs == 0) {
+            Toast.makeText(this, "You clicked " + messageAdapter.getItem(position) + " on row number " + position, Toast.LENGTH_SHORT).show();
+        }
+        else if(SignedInAs == 1){
+            Toast.makeText(this, "You clicked " + courseAdapter.getItem(position) + " on row number " + position, Toast.LENGTH_SHORT).show();
+        }
+        else if(SignedInAs == 2){
+            Toast.makeText(this, "You clicked " + courseAdapter.getItem(position) + " on row number " + position, Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void openSignInActivity() {
         Intent intent = new Intent(this, SignInActivity.class);
         startActivity(intent);
+    }
+
+    private ArrayList<Emne> getLoggedInStudentsCourses(){
+        ArrayList<Emne> courses = new ArrayList<>();
+        ArrayList<PersonHarEmne> personsHasCourses = new ArrayList<>();
+        ArrayList<Emne> studentsCourses = new ArrayList<>();
+
+
+        try {
+            personsHasCourses = getPersonHarEmneArray(jsonStringPersonHarEmne);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        try {
+            courses = getEmneArray(jsonStringEmner);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        for (int i = 0; i < personsHasCourses.size(); i++){
+
+            if(id == personsHasCourses.get(i).getIdPerson()){
+
+                for(int x = 0; x < courses.size(); x++){
+
+                    if(courses.get(x).getEmnekode().equals(personsHasCourses.get(i).getEmnekode())){
+                        studentsCourses.add(courses.get(x));
+                    }
+                }
+            }
+        }
+        return studentsCourses;
     }
 
     private void fillMeldingerRecyclerView(String jsonString){
@@ -235,7 +276,17 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         courseAdapter = new CourseRecyclerViewAdapter(this, courses);
-        courseAdapter.setClickListener((CourseRecyclerViewAdapter.ItemClickListener) this);
+        courseAdapter.setClickListener(this);
+        recyclerView.setAdapter(courseAdapter);
+    }
+
+    private void fillStudentsEmnerRecyclerView(ArrayList<Emne> emner){
+
+        // set up the RecyclerView
+        RecyclerView recyclerView = findViewById(R.id.recyclerView);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        courseAdapter = new CourseRecyclerViewAdapter(this, emner);
+        courseAdapter.setClickListener(this);
         recyclerView.setAdapter(courseAdapter);
     }
 
@@ -252,7 +303,7 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         lecturerAdapter = new LecturerRecyclerViewAdapter(this, lecturer);
-        lecturerAdapter.setClickListener((LecturerRecyclerViewAdapter.ItemClickListener) this);
+        lecturerAdapter.setClickListener(this);
         recyclerView.setAdapter(lecturerAdapter);
     }
 
@@ -361,7 +412,7 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
             @Override
             protected void onPostExecute(String s) {
                 super.onPostExecute(s);
-                fillMeldingerRecyclerView(s);
+                jsonStringMeldinger = s;
             }
 
             @Override
@@ -473,6 +524,43 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
             protected void onPostExecute(String s) {
                 super.onPostExecute(s);
                 jsonStringEmner = s;
+            }
+
+            @Override
+            protected String doInBackground(Void... voids) {
+                try {
+                    URL url = new URL(urlWebService);
+                    HttpURLConnection con = (HttpURLConnection) url.openConnection();
+                    StringBuilder sb = new StringBuilder();
+                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                    String json;
+                    while ((json = bufferedReader.readLine()) != null) {
+                        sb.append(json + "\n");
+                    }
+                    return sb.toString().trim();
+                } catch (Exception e) {
+                    return null;
+                }
+            }
+        }
+        DownloadJSON getJSON = new DownloadJSON();
+        getJSON.execute();
+    }
+
+    private void downloadPersonHarEmneJSON(final String urlWebService) {
+
+        class DownloadJSON extends AsyncTask<Void, Void, String> {
+
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+            }
+
+
+            @Override
+            protected void onPostExecute(String s) {
+                super.onPostExecute(s);
+                jsonStringPersonHarEmne = s;
             }
 
             @Override

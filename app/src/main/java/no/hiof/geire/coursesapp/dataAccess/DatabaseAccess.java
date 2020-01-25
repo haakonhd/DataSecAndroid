@@ -17,6 +17,7 @@ import no.hiof.geire.coursesapp.model.Emne;
 import no.hiof.geire.coursesapp.model.Foreleser;
 import no.hiof.geire.coursesapp.model.Melding;
 import no.hiof.geire.coursesapp.model.Person;
+import no.hiof.geire.coursesapp.model.PersonHarEmne;
 import no.hiof.geire.coursesapp.model.Student;
 import no.hiof.geire.coursesapp.model.Studieretning;
 
@@ -154,5 +155,25 @@ public class DatabaseAccess {
         }
 
         return persons;
+    }
+
+    public static ArrayList<PersonHarEmne> getPersonHarEmneArray (String json) throws JSONException {
+        //creating a json array from the json string
+        JSONObject jsnobject = new JSONObject(json);
+        JSONArray jsonArray = jsnobject.getJSONArray("personer");
+        ArrayList<PersonHarEmne> personsHasCourses = new ArrayList<>();
+
+        //looping through all the elements in json array
+        for (int i = 0; i < jsonArray.length(); i++) {
+
+            //getting json object from the json array
+            JSONObject obj= jsonArray.getJSONObject(i);
+
+            //getting the data from the json object and putting it inside object array
+            PersonHarEmne personsHasCourse = new PersonHarEmne(obj.optInt("person_id"), obj.optString("emne_emnekode"), obj.optBoolean("tilgang_til_emne"));
+            personsHasCourses.add(personsHasCourse);
+        }
+
+        return personsHasCourses;
     }
 }
