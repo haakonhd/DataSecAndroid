@@ -34,6 +34,7 @@ public class SignInActivity extends AppCompatActivity {
     private TextView EmailTextView, PasswordTextView;
     private String jsonStringPersoner, jsonStringForelesere, jsonStringStudenter;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,6 +67,7 @@ public class SignInActivity extends AppCompatActivity {
     public void checkEmailAndPassword(){
 
         int logInValue = 0;
+        Boolean foundUser = false;
 
         ArrayList<Foreleser> lecturers = new ArrayList<>();
         ArrayList<Person> persons = new ArrayList<>();
@@ -103,7 +105,9 @@ public class SignInActivity extends AppCompatActivity {
                             Intent intent = new Intent(this, MainActivity.class);
                             intent.putExtra("logged in as", 1);
                             intent.putExtra("id", persons.get(i).getIdPerson());
+                            intent.putExtra("name", persons.get(i).getNavn());
                             startActivity(intent);
+                            foundUser = true;
                             break;
                         }
                     }
@@ -115,15 +119,17 @@ public class SignInActivity extends AppCompatActivity {
                             Intent intent = new Intent(this, MainActivity.class);
                             intent.putExtra("logged in as", 2);
                             intent.putExtra("id", persons.get(i).getIdPerson());
+                            intent.putExtra("name", persons.get(i).getNavn());
                             startActivity(intent);
+                            foundUser = true;
                             break;
                         }
                     }
                 }
-                else{
-                    Toast.makeText(this, "Email and password not valid", Toast.LENGTH_SHORT).show();
-                }
             }
+        }
+        if(foundUser == false) {
+            Toast.makeText(this, "Email and/or password not valid", Toast.LENGTH_SHORT).show();
         }
     }
 

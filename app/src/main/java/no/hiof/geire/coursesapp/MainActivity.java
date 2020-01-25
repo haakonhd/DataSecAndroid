@@ -12,6 +12,7 @@ import no.hiof.geire.coursesapp.model.Emne;
 import no.hiof.geire.coursesapp.model.Foreleser;
 import no.hiof.geire.coursesapp.model.Melding;
 import no.hiof.geire.coursesapp.dataAccess.DatabaseAccess;
+import no.hiof.geire.coursesapp.model.Person;
 import no.hiof.geire.coursesapp.model.PersonHarEmne;
 import no.hiof.geire.coursesapp.model.Studieretning;
 
@@ -47,10 +48,12 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static no.hiof.geire.coursesapp.dataAccess.DatabaseAccess.getEmneArray;
 import static no.hiof.geire.coursesapp.dataAccess.DatabaseAccess.getForeleserArray;
 import static no.hiof.geire.coursesapp.dataAccess.DatabaseAccess.getMeldingArray;
+import static no.hiof.geire.coursesapp.dataAccess.DatabaseAccess.getPersonArray;
 import static no.hiof.geire.coursesapp.dataAccess.DatabaseAccess.getPersonHarEmneArray;
 
 public class MainActivity extends AppCompatActivity implements MessageRecyclerViewAdapter.ItemClickListener, CourseRecyclerViewAdapter.ItemClickListener, LecturerRecyclerViewAdapter.ItemClickListener{
@@ -62,8 +65,8 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
     static final int REQUEST_IMAGE_CAPTURE = 1;
     Bitmap imageBitmap;
 
-    Integer SignedInAs, id;
-    String jsonStringForelesere, jsonStringPersoner, jsonStringEmner, jsonStringPersonHarEmne, jsonStringMeldinger, mText;
+    private Integer SignedInAs, id;
+    private String jsonStringForelesere, jsonStringPersoner, jsonStringEmner, jsonStringPersonHarEmne, jsonStringMeldinger, mText, navn;
 
     MessageRecyclerViewAdapter messageAdapter;
     LecturerRecyclerViewAdapter lecturerAdapter;
@@ -78,6 +81,7 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         Intent intent = getIntent();
         SignedInAs = intent.getIntExtra("logged in as", 0);
         id = intent.getIntExtra("id", 0);
+        navn = intent.getStringExtra("name");
 
         downloadMeldingerJSON("http://158.39.188.228/api/melding/read.php");
         downloadForelesereJSON("http://158.39.188.228/api/foreleser/read.php");
@@ -113,6 +117,7 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         ConfirmPinBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                makeToast(jsonStringEmner);
                 //Check Pin
                 //Fill recyclerview with corresponding classes messages.
             }
@@ -177,12 +182,12 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         }
 
         if(SignedInAs == 1) {
-            StatusTextView.setText("Logged in as student");
+            StatusTextView.setText(navn + " (Student)");
             SendMessageBtn.setVisibility(View.VISIBLE);
             ChangePasswordBtn.setVisibility(View.VISIBLE);
         }
         if(SignedInAs == 2) {
-            StatusTextView.setText("Logged in as foreleser");
+            StatusTextView.setText(navn + " (Foreleser)");
             ChangePasswordBtn.setVisibility(View.VISIBLE);
             AddSubjectBtn.setVisibility(View.VISIBLE);
             MessageReplyBtn.setVisibility(View.VISIBLE);
@@ -212,6 +217,27 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
     private void openSignInActivity() {
         Intent intent = new Intent(this, SignInActivity.class);
         startActivity(intent);
+    }
+
+    private void makeToast(String string){
+        Toast.makeText(this, string, Toast.LENGTH_SHORT).show();
+    }
+
+    private String getNameOfSignedInPerson(int id){
+        String navn = "";
+        ArrayList<Person> persons = new ArrayList<>();
+        try {
+            persons = getPersonArray(jsonStringPersoner);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        for(int i = 0; i < persons.size(); i++){
+            if(persons.get(i).getIdPerson() == id){
+                navn = persons.get(i).getNavn();
+                break;
+            }
+        }
+        return navn;
     }
 
     private ArrayList<Emne> getLoggedInStudentsCourses(){
