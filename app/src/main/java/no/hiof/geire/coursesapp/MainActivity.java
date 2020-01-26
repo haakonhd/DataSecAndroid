@@ -130,9 +130,13 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
             public void onClick(View v) {
                 String pin = EnterPinTextView.getText().toString();
                 ArrayList<Melding> messages = getMeldingerFromPin(pin);
-                fillMeldingerRecyclerView(messages);
-                //Check Pin
-                //Fill recyclerview with corresponding classes messages.
+                if(messages.size() > 0) {
+                    fillMeldingerRecyclerView(messages);
+                    StatusTextView.setText("Not signed in (guest)\nEmnekode: " + messages.get(0).getEmnekode());
+                }
+                else{
+                    makeToast("Ingen meldinger på oppgitt PIN-nummer");
+                }
             }
         });
 
@@ -217,7 +221,7 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
     @Override
     public void onItemClick(View view, int position) {
         if(SignedInAs == 0) {
-            Toast.makeText(this, "You clicked " + messageAdapter.getItem(position) + " on row number " + position, Toast.LENGTH_SHORT).show();
+            inputCommentOrReportDialogBox(messageAdapter.getItem(position));
         }
         else if(SignedInAs == 1){
             String emnekode = courseAdapter.getItem(position).getEmnekode();
@@ -428,7 +432,7 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         jsonObject.accumulate("idForeleser", foreleser.toString());
         jsonObject.accumulate("idForfatter", id.toString());
         jsonObject.accumulate("innhold_melding", mText);
-        jsonObject.accumulate("innhold_svar", JSONObject.NULL.toString());
+        jsonObject.accumulate("innhold_svar", " ");
         jsonObject.accumulate("rapportert", false);
 
         json = jsonObject.toString();
@@ -450,6 +454,24 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         jsonObject.accumulate("idForfatter", idStudent.toString());
         jsonObject.accumulate("innhold_melding", innholdMelding);
         jsonObject.accumulate("innhold_svar", mText);
+        jsonObject.accumulate("rapportert", rapportertToString);
+
+        json = jsonObject.toString();
+
+        updatePost(json);
+    }
+
+    private void sendReport(Melding message) throws JSONException {
+        String json = "";
+        String rapportertToString = "1";
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.accumulate("idMelding", String.valueOf(message.getIdMelding()));
+        jsonObject.accumulate("emnekode", message.getEmnekode());
+        jsonObject.accumulate("idForeleser", String.valueOf(message.getIdForeleser()));
+        jsonObject.accumulate("idForfatter", String.valueOf(message.getIdForfatter()));
+        jsonObject.accumulate("innhold_melding", message.getInnhold_melding());
+        jsonObject.accumulate("innhold_svar", message.getInnhold_svar());
         jsonObject.accumulate("rapportert", rapportertToString);
 
         json = jsonObject.toString();
@@ -575,6 +597,44 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+
+        builder.show();
+    }
+
+    private void inputCommentOrReportDialogBox(final Melding message){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Enter comment or report");
+
+        // Set up the input
+        final EditText input = new EditText(this);
+        // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        builder.setView(input);
+
+        // Set up the buttons
+        builder.setPositiveButton("Comment", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                mText = input.getText().toString();
+                //Create Kommentar
+            }
+        });
+        builder.setNegativeButton("Report", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                try {
+                    sendReport(message);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        builder.setNeutralButton("Cancel", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.cancel();

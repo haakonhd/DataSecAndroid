@@ -7,10 +7,10 @@ public class Melding {
     private int idForfatter;
     private String emnekode;
     private boolean rappotert;
-    private Integer idForeleser;
+    private int idForeleser;
     private String innhold_svar;
 
-    public Melding(String innhold_melding, int idForfatter, String emnekode, boolean rappotert, Integer idForeleser, String innhold_svar) {
+    public Melding(String innhold_melding, int idForfatter, String emnekode, boolean rappotert, int idForeleser, String innhold_svar) {
         this.innhold_melding = innhold_melding;
         this.idForfatter = idForfatter;
         this.emnekode = emnekode;

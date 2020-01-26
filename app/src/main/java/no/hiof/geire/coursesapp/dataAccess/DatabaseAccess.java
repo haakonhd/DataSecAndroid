@@ -39,7 +39,7 @@ public class DatabaseAccess {
 
             //getting the data from the json object and putting it inside object array
             Melding message = new Melding(obj.optInt("idMelding"), obj.optString("innhold_melding"), obj.optInt("idForfatter"),
-                    obj.optString("emnekode"), obj.optBoolean("rapportert"), obj.optInt("foreleser"), obj.optString("innhold_svar"));
+                    obj.optString("emnekode"), obj.optBoolean("rapportert"), obj.optInt("idForeleser"), obj.optString("innhold_svar"));
             messages.add(message);
         }
 
