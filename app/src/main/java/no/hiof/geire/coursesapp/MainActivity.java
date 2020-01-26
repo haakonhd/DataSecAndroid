@@ -128,7 +128,9 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         ConfirmPinBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                makeToast(jsonStringEmner);
+                String pin = EnterPinTextView.getText().toString();
+                ArrayList<Melding> messages = getMeldingerFromPin(pin);
+                fillMeldingerRecyclerView(messages);
                 //Check Pin
                 //Fill recyclerview with corresponding classes messages.
             }
@@ -256,6 +258,37 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
             }
         }
         return navn;
+    }
+
+    private ArrayList<Melding> getMeldingerFromPin(String pin){
+        ArrayList<Emne> courses = new ArrayList<>();
+        ArrayList<Melding> messages = new ArrayList<>();
+        ArrayList<Melding> messagesFromPin = new ArrayList<>();
+
+        try {
+            courses = getEmneArray(jsonStringEmner);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        try {
+            messages = getMeldingArray(jsonStringMeldinger);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        for (int i = 0; i < courses.size(); i++){
+            String coursePin = String.valueOf(courses.get(i).getPinNr());
+            if(coursePin.equals(pin)){
+
+                for(int x = 0; x < messages.size(); x++){
+
+                    if(messages.get(x).getEmnekode().equals(courses.get(i).getEmnekode())){
+                        messagesFromPin.add(messages.get(x));
+                    }
+                }
+            }
+        }
+        return messagesFromPin;
     }
 
     private ArrayList<Emne> getLoggedInStudentsCourses(){
@@ -554,6 +587,7 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
     private  void inputChangePasswordDialogBox(){
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Enter new password");
+        builder.setMessage("(Changing password is not a feature)");
 
         // Set up the input
         final EditText input = new EditText(this);
@@ -565,8 +599,7 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                mText = input.getText().toString();
-                makeToast("Is not a feature");
+                //mText = input.getText().toString();
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
