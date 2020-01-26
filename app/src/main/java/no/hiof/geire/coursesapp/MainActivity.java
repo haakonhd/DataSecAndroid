@@ -50,6 +50,7 @@ import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
@@ -224,8 +225,10 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         else if(SignedInAs == 2){
             String emnekode = messageAdapter.getItem(position).getEmnekode();
             int student = messageAdapter.getItem(position).getIdForfatter();
+            int idmelding = messageAdapter.getItem(position).getIdMelding();
             String innholdMelding = messageAdapter.getItem(position).getInnhold_melding();
-            inputReplyDialogBox(emnekode, student, innholdMelding);
+            boolean rapportert = messageAdapter.getItem(position).isRappotert();
+            inputReplyDialogBox(emnekode, student, innholdMelding, idmelding, rapportert);
         }
     }
 
@@ -329,6 +332,8 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         messageAdapter = new MessageRecyclerViewAdapter(this, messages);
         messageAdapter.setClickListener(this);
         recyclerView.setAdapter(messageAdapter);
+
+        downloadMeldingerJSON("http://158.39.188.228/api/melding/read.php");
     }
 
     private void fillEmnerRecyclerView(String jsonString){
@@ -346,6 +351,7 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         courseAdapter = new CourseRecyclerViewAdapter(this, courses);
         courseAdapter.setClickListener(this);
         recyclerView.setAdapter(courseAdapter);
+
     }
 
     private void fillStudentsEmnerRecyclerView(ArrayList<Emne> emner){
@@ -397,16 +403,21 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         sendPost(json);
     }
 
-    private void sendReply(String mText, String emnekode, Integer idStudent, String innholdMelding) throws JSONException {
+    private void sendReply(String mText, String emnekode, Integer idStudent, String innholdMelding, Integer idMelding, boolean rapportert) throws JSONException {
         String json = "";
+        String rapportertToString = "0";
+        if(rapportert){
+            rapportertToString = "1";
+        }
 
         JSONObject jsonObject = new JSONObject();
+        jsonObject.accumulate("idMelding", idMelding.toString());
         jsonObject.accumulate("emnekode", emnekode);
         jsonObject.accumulate("idForeleser", id.toString());
         jsonObject.accumulate("idForfatter", idStudent.toString());
         jsonObject.accumulate("innhold_melding", innholdMelding);
         jsonObject.accumulate("innhold_svar", mText);
-        jsonObject.accumulate("rapportert", false);
+        jsonObject.accumulate("rapportert", rapportertToString);
 
         json = jsonObject.toString();
 
@@ -419,25 +430,18 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
             public void run() {
                 try {
                     URL url = new URL("http://158.39.188.228/api/melding/update.php");
-                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                    conn.setRequestMethod("POST");
-                    conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
-                    conn.setRequestProperty("Accept","application/json");
-                    conn.setDoOutput(true);
-                    conn.setDoInput(true);
+                    HttpURLConnection httpCon = (HttpURLConnection) url.openConnection();
+                    httpCon.setDoOutput(true);
+                    httpCon.setDoInput(true);
+                    httpCon.setRequestMethod("PUT");
+                    httpCon.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+                    httpCon.setRequestProperty("Accept","application/json");
+                    OutputStreamWriter out = new OutputStreamWriter(httpCon.getOutputStream());
+                    out.write(json);
+                    out.close();
 
-                    Log.i("JSON", json);
-                    DataOutputStream os = new DataOutputStream(conn.getOutputStream());
-                    //os.writeBytes(URLEncoder.encode(jsonParam.toString(), "UTF-8"));
-                    os.writeBytes(json);
+                    httpCon.getInputStream();
 
-                    os.flush();
-                    os.close();
-
-                    Log.i("STATUS", String.valueOf(conn.getResponseCode()));
-                    Log.i("MSG" , conn.getResponseMessage());
-
-                    conn.disconnect();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -515,7 +519,7 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         builder.show();
     }
 
-    private void inputReplyDialogBox(final String emnekode, final int idStudent, final String innholdMelding){
+    private void inputReplyDialogBox(final String emnekode, final int idStudent, final String innholdMelding, final int idMelding, final boolean rapportert){
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Enter reply");
 
@@ -531,7 +535,7 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
             public void onClick(DialogInterface dialog, int which) {
                 mText = input.getText().toString();
                 try {
-                    sendReply(mText, emnekode, idStudent, innholdMelding);
+                    sendReply(mText, emnekode, idStudent, innholdMelding, idMelding, rapportert);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -562,6 +566,7 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 mText = input.getText().toString();
+                makeToast("Is not a feature");
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -788,6 +793,5 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         DownloadJSON getJSON = new DownloadJSON();
         getJSON.execute();
     }
-
 
 }
