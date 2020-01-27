@@ -48,7 +48,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="as guest enter PIN to see messages"
+        android:text=" as guest enter PIN to see messages"
         android:textAlignment="center"
         android:textSize="13sp"
         app:layout_constraintStart_toStartOf="@+id/statusTextView"
@@ -69,7 +69,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="220dp"
+        android:layout_marginTop="200dp"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"
         android:background="@android:color/darker_gray"
@@ -84,7 +84,7 @@
         android:id="@+id/changePasswordBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:text="Change Password"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
@@ -109,14 +109,15 @@
         app:layout_constraintBottom_toBottomOf="@+id/sendMessageBtn"
         app:layout_constraintEnd_toStartOf="@+id/sendMessageBtn"
         app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintHorizontal_chainStyle="packed"
         app:layout_constraintStart_toStartOf="parent" />
 
     <Button
-        android:id="@+id/addSubjectBtn"
+        android:id="@+id/addCourseBtn"
         android:layout_width="115dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Add Subject"
+        android:layout_marginTop="8dp"
+        android:text="Add Course"
         app:layout_constraintEnd_toEndOf="@+id/changePasswordBtn"
         app:layout_constraintTop_toBottomOf="@+id/changePasswordBtn" />
 
@@ -125,10 +126,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
-        android:text="Take Picture"
         android:onClick="takePic"
-        app:layout_constraintBottom_toBottomOf="@+id/addSubjectBtn"
-        app:layout_constraintEnd_toStartOf="@+id/addSubjectBtn" />
+        android:text="Take Picture"
+        app:layout_constraintBottom_toBottomOf="@+id/addCourseBtn"
+        app:layout_constraintEnd_toStartOf="@+id/addCourseBtn" />
 
     <ImageView
         android:id="@+id/imageView"

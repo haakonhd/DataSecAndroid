@@ -18,9 +18,6 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
-        <activity android:name=".AdminActivity"></activity>
-        <activity android:name=".LecturerActivity" />
-        <activity android:name=".StudentActivity" />
         <activity android:name=".RegiActivity" />
         <activity android:name=".SignInActivity" />
         <activity android:name=".MainActivity">

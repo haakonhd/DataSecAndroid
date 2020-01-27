@@ -45,9 +45,9 @@ public class SignInActivity extends AppCompatActivity {
         EmailTextView = (TextView) findViewById(R.id.emailTextView);
         PasswordTextView = (TextView) findViewById(R.id.passwordTexView);
 
-        downloadForelesereJSON("http://158.39.188.228/api/foreleser/read.php");
-        downloadPersonerJSON("http://158.39.188.228/api/person/read.php");
-        downloadStudenterJSON("http://158.39.188.228/api/student/read.php");
+        downloadForelesereJSON(getString(R.string.ip) + "/api/foreleser/read.php");
+        downloadPersonerJSON(getString(R.string.ip) + "/api/person/read.php");
+        downloadStudenterJSON(getString(R.string.ip) + "/api/student/read.php");
 
         SignInBtn.setOnClickListener(new View.OnClickListener() {
             @Override

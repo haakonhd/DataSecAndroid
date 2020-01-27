@@ -12,7 +12,7 @@
         android:id="@+id/registerMainTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="40dp"
+        android:layout_marginTop="32dp"
         android:text="TextView"
         app:layout_constraintBottom_toTopOf="@+id/nameEditText"
         app:layout_constraintEnd_toEndOf="parent"
@@ -24,7 +24,6 @@
         android:id="@+id/nameEditText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
         android:ems="10"
         android:hint="enter name"
         android:inputType="textPersonName"
@@ -38,7 +37,6 @@
         android:id="@+id/emailEditText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
         android:ems="10"
         android:hint="enter email"
         android:inputType="textEmailAddress"
@@ -52,12 +50,12 @@
         android:id="@+id/classEditText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
         android:ems="10"
         android:hint="enter class (20XX)"
         android:inputType="number"
+        android:maxLength="4"
         android:textAlignment="center"
-        app:layout_constraintBottom_toTopOf="@+id/courseTextView"
+        app:layout_constraintBottom_toTopOf="@+id/chosenStudyProgramTextView"
         app:layout_constraintEnd_toEndOf="@+id/passwordEditText"
         app:layout_constraintStart_toStartOf="@+id/passwordEditText"
         app:layout_constraintTop_toBottomOf="@+id/passwordEditText" />
@@ -66,7 +64,6 @@
         android:id="@+id/passwordEditText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
         android:ems="10"
         android:hint="enter password"
         android:inputType="textPassword"
@@ -80,23 +77,57 @@
         android:id="@+id/courseTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="8dp"
         android:text="TextView"
-        app:layout_constraintBottom_toTopOf="@+id/registerRecyclerView"
+        app:layout_constraintBottom_toTopOf="@+id/confirmRegistrationBtn"
         app:layout_constraintEnd_toEndOf="@+id/classEditText"
         app:layout_constraintStart_toStartOf="@+id/classEditText"
-        app:layout_constraintTop_toBottomOf="@+id/classEditText" />
+        app:layout_constraintTop_toBottomOf="@+id/chosenStudyProgramTextView" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/registerRecyclerView"
-        android:layout_width="343dp"
-        android:layout_height="277dp"
-        android:layout_marginBottom="16dp"
+    <Button
+        android:id="@+id/confirmRegistrationBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="100dp"
+        android:text="Confirm"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@+id/courseTextView"
         app:layout_constraintStart_toStartOf="@+id/courseTextView"
-        app:layout_constraintTop_toBottomOf="@+id/courseTextView"
-        app:layout_constraintVertical_bias="0.525" />
+        app:layout_constraintTop_toBottomOf="@+id/courseTextView" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/registerRecyclerView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.515"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/chosenStudyProgramTextView"
+        android:layout_width="236dp"
+        android:layout_height="48dp"
+        android:textAlignment="center"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toTopOf="@+id/courseTextView"
+        app:layout_constraintEnd_toStartOf="@+id/addStudyProgramBtn"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/classEditText" />
+
+    <Button
+        android:id="@+id/addStudyProgramBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Add study program"
+        app:layout_constraintBottom_toBottomOf="@+id/chosenStudyProgramTextView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/chosenStudyProgramTextView"
+        app:layout_constraintTop_toTopOf="@+id/chosenStudyProgramTextView"
+        app:layout_constraintVertical_bias="0.333" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

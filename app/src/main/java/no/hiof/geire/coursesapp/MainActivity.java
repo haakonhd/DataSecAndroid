@@ -69,15 +69,15 @@ import static no.hiof.geire.coursesapp.dataAccess.DatabaseAccess.getPersonHarEmn
 
 public class MainActivity extends AppCompatActivity implements MessageRecyclerViewAdapter.ItemClickListener, CourseRecyclerViewAdapter.ItemClickListener, LecturerRecyclerViewAdapter.ItemClickListener{
 
-    private Button GoToSignInBtn, ConfirmPinBtn, MessageReplyBtn, SendMessageBtn, ChangePasswordBtn, AddSubjectBtn, TakePicureBtn;
+    private Button GoToSignInBtn, ConfirmPinBtn, MessageReplyBtn, SendMessageBtn, ChangePasswordBtn, AddCourseBtn, TakePicureBtn;
     private TextView StatusTextView, EnterPinTextView, PinInfoTextView;
     ImageView ImageView;
 
     static final int REQUEST_IMAGE_CAPTURE = 1;
     Bitmap imageBitmap;
 
-    private Integer SignedInAs, id;
-    private String jsonStringForelesere, jsonStringPersoner, jsonStringEmner, jsonStringPersonHarEmne, jsonStringMeldinger, mText, navn;
+    private Integer SignedInAs, id, AddCourseBtnPressed, SendMessageBtnPressed;
+    private String jsonStringForelesere, jsonStringPersoner, jsonStringEmner, jsonStringPersonHarEmne, jsonStringMeldinger, jsonStringStudieretninger, mText, navn;
 
     MessageRecyclerViewAdapter messageAdapter;
     LecturerRecyclerViewAdapter lecturerAdapter;
@@ -94,11 +94,12 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         id = intent.getIntExtra("id", 0);
         navn = intent.getStringExtra("name");
 
-        downloadMeldingerJSON("http://158.39.188.228/api/melding/read.php");
-        downloadForelesereJSON("http://158.39.188.228/api/foreleser/read.php");
-        downloadPersonerJSON("http://158.39.188.228/api/person/read.php");
-        downloadEmnerJSON("http://158.39.188.228/api/emne/read.php");
-        downloadPersonHarEmneJSON("http://158.39.188.228/api/person_har_emne/read.php");
+        downloadMeldingerJSON(getString(R.string.ip) + "/api/melding/read.php");
+        downloadForelesereJSON(getString(R.string.ip) + "/api/foreleser/read.php");
+        downloadPersonerJSON(getString(R.string.ip) + "/api/person/read.php");
+        downloadEmnerJSON(getString(R.string.ip) + "/api/emne/read.php");
+        downloadPersonHarEmneJSON(getString(R.string.ip) + "/api/person_har_emne/read.php");
+        downloadStudieretningerJSON(getString(R.string.ip) + "/api/studieretninger/read.php");
 
         StatusTextView = findViewById(R.id.statusTextView);
         GoToSignInBtn = findViewById(R.id.goToSignInBtn);
@@ -108,7 +109,7 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         MessageReplyBtn = findViewById(R.id.messageReplyBtn);
         SendMessageBtn = findViewById(R.id.sendMessageBtn);
         ChangePasswordBtn = findViewById(R.id.changePasswordBtn);
-        AddSubjectBtn = findViewById(R.id.addSubjectBtn);
+        AddCourseBtn = findViewById(R.id.addCourseBtn);
         TakePicureBtn = findViewById(R.id.takePicureBtn);
         ImageView = findViewById(R.id.imageView);
 
@@ -151,31 +152,33 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         SendMessageBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                SendMessageBtnPressed = 1;
+                AddCourseBtnPressed = 0;
                 ArrayList<Emne> emner = getLoggedInStudentsCourses();
                 fillStudentsEmnerRecyclerView(emner);
-                //Check chosen subject(emne)
-                //Open messageBox and create message
-                //inputMessageDialogBox();
-                //Create Melding in database
             }
         });
 
         ChangePasswordBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //Check logged in person id
-                //Open changePasswordBox and update this Person with new password
-
                 inputChangePasswordDialogBox();
-                //Update Person's password in database
             }
         });
 
-        AddSubjectBtn.setOnClickListener(new View.OnClickListener() {
+        AddCourseBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //Check person id
-                //Open changePasswordBox and update Person with new password
+                if(SignedInAs == 1){
+                    SendMessageBtnPressed = 0;
+                    AddCourseBtnPressed = 1;
+                    fillEmnerRecyclerView(jsonStringEmner);
+                }
+                else if(SignedInAs == 2){
+                    SendMessageBtnPressed = 0;
+                    AddCourseBtnPressed = 1;
+                    fillEmnerRecyclerView(jsonStringEmner);
+                }
             }
         });
 
@@ -186,7 +189,7 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         MessageReplyBtn.setVisibility(View.INVISIBLE);
         SendMessageBtn.setVisibility(View.INVISIBLE);
         ChangePasswordBtn.setVisibility(View.INVISIBLE);
-        AddSubjectBtn.setVisibility(View.INVISIBLE);
+        AddCourseBtn.setVisibility(View.INVISIBLE);
         TakePicureBtn.setVisibility(View.INVISIBLE);
         ImageView.setVisibility(View.INVISIBLE);
 
@@ -201,12 +204,13 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         if(SignedInAs == 1) {
             StatusTextView.setText(navn + " (Student)");
             SendMessageBtn.setVisibility(View.VISIBLE);
+            AddCourseBtn.setVisibility(View.VISIBLE);
             ChangePasswordBtn.setVisibility(View.VISIBLE);
         }
         if(SignedInAs == 2) {
             StatusTextView.setText(navn + " (Foreleser)");
             ChangePasswordBtn.setVisibility(View.VISIBLE);
-            AddSubjectBtn.setVisibility(View.VISIBLE);
+            AddCourseBtn.setVisibility(View.VISIBLE);
             MessageReplyBtn.setVisibility(View.VISIBLE);
             TakePicureBtn.setVisibility(View.VISIBLE);
             ImageView.setVisibility(View.VISIBLE);
@@ -224,11 +228,20 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
             inputCommentOrReportDialogBox(messageAdapter.getItem(position));
         }
         else if(SignedInAs == 1){
-            String emnekode = courseAdapter.getItem(position).getEmnekode();
-            int foreleser = courseAdapter.getItem(position).getForeleser();
-            inputMessageDialogBox(emnekode, foreleser);
+            if(SendMessageBtnPressed == 1) {
+                String emnekode = courseAdapter.getItem(position).getEmnekode();
+                int foreleser = courseAdapter.getItem(position).getForeleser();
+                inputMessageDialogBox(emnekode, foreleser);
+            }
+            if(AddCourseBtnPressed == 1){
+                String emnekode = courseAdapter.getItem(position).getEmnekode();
+                int foreleser = courseAdapter.getItem(position).getForeleser();
+                String emnenavn = courseAdapter.getItem(position).getEmnenavn();
+                sendCourseAccessRequestDialogBox(emnekode, foreleser, emnenavn);
+            }
         }
         else if(SignedInAs == 2){
+
             String emnekode = messageAdapter.getItem(position).getEmnekode();
             int student = messageAdapter.getItem(position).getIdForfatter();
             int idmelding = messageAdapter.getItem(position).getIdMelding();
@@ -370,7 +383,7 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         messageAdapter.setClickListener(this);
         recyclerView.setAdapter(messageAdapter);
 
-        downloadMeldingerJSON("http://158.39.188.228/api/melding/read.php");
+        downloadMeldingerJSON(getString(R.string.ip) + "/api/melding/read.php");
     }
 
     private void fillEmnerRecyclerView(String jsonString){
@@ -484,7 +497,7 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
             @Override
             public void run() {
                 try {
-                    URL url = new URL("http://158.39.188.228/api/melding/update.php");
+                    URL url = new URL(getString(R.string.ip) + "/api/melding/update.php");
                     HttpURLConnection httpCon = (HttpURLConnection) url.openConnection();
                     httpCon.setDoOutput(true);
                     httpCon.setDoInput(true);
@@ -511,7 +524,56 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
             @Override
             public void run() {
                 try {
-                    URL url = new URL("http://158.39.188.228/api/melding/create.php");
+                    URL url = new URL(getString(R.string.ip) + "/api/melding/create.php");
+                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("POST");
+                    conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+                    conn.setRequestProperty("Accept","application/json");
+                    conn.setDoOutput(true);
+                    conn.setDoInput(true);
+
+                    Log.i("JSON", json);
+                    DataOutputStream os = new DataOutputStream(conn.getOutputStream());
+                    //os.writeBytes(URLEncoder.encode(jsonParam.toString(), "UTF-8"));
+                    os.writeBytes(json);
+
+                    os.flush();
+                    os.close();
+
+                    Log.i("STATUS", String.valueOf(conn.getResponseCode()));
+                    Log.i("MSG" , conn.getResponseMessage());
+
+                    conn.disconnect();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        thread.start();
+    }
+
+    public void sendCourseAccessRequest(Integer idstudent, String emnekode) throws JSONException {
+        String json = "";
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.accumulate("person_id", idstudent.toString());
+        jsonObject.accumulate("emne_emnekode", emnekode);
+        jsonObject.accumulate("tilgang_til_emne", true);
+
+        json = jsonObject.toString();
+
+        createPersonHarEmne(json);
+
+
+    }
+
+    public void createPersonHarEmne(final String json) {
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    URL url = new URL(getString(R.string.ip) + "/api/person_har_emne/create.php");
                     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                     conn.setRequestMethod("POST");
                     conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
@@ -574,6 +636,38 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         builder.show();
     }
 
+    private void sendCourseAccessRequestDialogBox(final String emnekode, final int foreleser, final String emnenavn){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Request access to '" + emnenavn + "'");
+
+        // Set up the input
+        final EditText input = new EditText(this);
+        // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        builder.setView(input);
+
+        // Set up the buttons
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                mText = input.getText().toString();
+                try {
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+
+        builder.show();
+    }
+
     private void inputReplyDialogBox(final String emnekode, final int idStudent, final String innholdMelding, final int idMelding, final boolean rapportert){
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Enter reply");
@@ -600,6 +694,16 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.cancel();
+            }
+        });
+        builder.setNeutralButton("Send reply and give student access", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                try {
+                    sendCourseAccessRequest(idStudent, emnekode);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
         });
 
@@ -864,6 +968,43 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
             protected void onPostExecute(String s) {
                 super.onPostExecute(s);
                 jsonStringPersonHarEmne = s;
+            }
+
+            @Override
+            protected String doInBackground(Void... voids) {
+                try {
+                    URL url = new URL(urlWebService);
+                    HttpURLConnection con = (HttpURLConnection) url.openConnection();
+                    StringBuilder sb = new StringBuilder();
+                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                    String json;
+                    while ((json = bufferedReader.readLine()) != null) {
+                        sb.append(json + "\n");
+                    }
+                    return sb.toString().trim();
+                } catch (Exception e) {
+                    return null;
+                }
+            }
+        }
+        DownloadJSON getJSON = new DownloadJSON();
+        getJSON.execute();
+    }
+
+    private void downloadStudieretningerJSON(final String urlWebService) {
+
+        class DownloadJSON extends AsyncTask<Void, Void, String> {
+
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+            }
+
+
+            @Override
+            protected void onPostExecute(String s) {
+                super.onPostExecute(s);
+                jsonStringStudieretninger = s;
             }
 
             @Override

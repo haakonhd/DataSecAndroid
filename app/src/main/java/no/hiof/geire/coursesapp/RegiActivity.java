@@ -17,6 +17,7 @@ import android.os.ResultReceiver;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -37,7 +38,7 @@ import java.util.regex.Pattern;
 import static no.hiof.geire.coursesapp.dataAccess.DatabaseAccess.getEmneArray;
 import static no.hiof.geire.coursesapp.dataAccess.DatabaseAccess.getStudieretningArray;
 
-public class RegiActivity extends AppCompatActivity implements CourseRecyclerViewAdapter.ItemClickListener, StudyProgramRecyclerViewAdapter.ItemClickListener {
+public class RegiActivity extends AppCompatActivity implements StudyProgramRecyclerViewAdapter.ItemClickListener{
 
     private TextView RegisterMainTextView;
     private EditText NameEditText;
@@ -45,13 +46,17 @@ public class RegiActivity extends AppCompatActivity implements CourseRecyclerVie
     private EditText PasswordEditText;
     private EditText ClassEditText;
     private TextView CourseTextView;
+    private TextView StudyProgramTextView;
+    private Button ConfirmRegistrationBtn;
+    private Button AddStudyProgramBtn;
+    private RecyclerView RegisterRecyclerView;
+
+    private String jsonStringStudieretninger;
+
+    StudyProgramRecyclerViewAdapter studyProgramAdapter;
 
     Integer RegisterAs = 0;
-    String jsonString;
-    Emne course;
-
-    CourseRecyclerViewAdapter courseAdapter;
-    StudyProgramRecyclerViewAdapter studyProgramAdapter;
+    Studieretning sr = new Studieretning();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,41 +66,88 @@ public class RegiActivity extends AppCompatActivity implements CourseRecyclerVie
         Intent intent = getIntent();
         RegisterAs = intent.getIntExtra("register as", 0);
 
+        downloadStudieretningerJSON(getString(R.string.ip) + "/api/studieretning/read.php");
+
         RegisterMainTextView = findViewById(R.id.registerMainTextView);
         CourseTextView = findViewById(R.id.courseTextView);
+        StudyProgramTextView = findViewById(R.id.chosenStudyProgramTextView);
         NameEditText = findViewById(R.id.nameEditText);
         EmailEditText = findViewById(R.id.emailEditText);
         PasswordEditText = findViewById(R.id.passwordEditText);
         ClassEditText = findViewById(R.id.classEditText);
+        ConfirmRegistrationBtn = findViewById(R.id.confirmRegistrationBtn);
+        AddStudyProgramBtn = findViewById(R.id.addStudyProgramBtn);
+        RegisterRecyclerView = findViewById(R.id.registerRecyclerView);
 
         if(RegisterAs == 0) {
             RegisterMainTextView.setText("Registrer deg som student");
-            CourseTextView.setText("Velg din studieretning");
+            CourseTextView.setText("Trykk 'confirm' når alle feltene er fylt ut korrekt");
             ClassEditText.setVisibility(View.VISIBLE);
-            downloadStudieretningerJSON("http://158.39.188.228/api/studieretning/read.php");
+            StudyProgramTextView.setVisibility(View.VISIBLE);
+            AddStudyProgramBtn.setVisibility(View.VISIBLE);
+            RegisterRecyclerView.setVisibility(View.INVISIBLE);
         }
         else if(RegisterAs == 1) {
             RegisterMainTextView.setText("Registrer deg som foreleser");
-            CourseTextView.setText("Velg et kurs du har hovedansvaret for");
+            CourseTextView.setText("Trykk 'confirm' når alle feltene er fylt ut korrekt");
             ClassEditText.setVisibility(View.INVISIBLE);
-            downloadEmnerJSON("http://158.39.188.228/api/emne/read.php");
+            StudyProgramTextView.setVisibility(View.INVISIBLE);
+            AddStudyProgramBtn.setVisibility(View.INVISIBLE);
+            RegisterRecyclerView.setVisibility(View.INVISIBLE);
         }
+
+        ConfirmRegistrationBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(RegisterAs == 0)
+                    checkRegisterStudentInput();
+                else if(RegisterAs == 1) {
+                    checkRegisterLecturerInput();
+                }
+            }
+        });
+
+        AddStudyProgramBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                RegisterRecyclerView.setVisibility(View.VISIBLE);
+                fillStudyProgramRecyclerView(jsonStringStudieretninger);
+            }
+        });
     }
 
 
     @Override
     public void onItemClick(View view, int position) {
-        if(RegisterAs == 0)
-            Toast.makeText(this, "You clicked " + studyProgramAdapter.getItem(position) + " on row number " + position, Toast.LENGTH_SHORT).show();
-        else if(RegisterAs == 1) {
-            course = courseAdapter.getItem(position);
-            checkRegisterLecturerInput();
+        sr = studyProgramAdapter.getItem(position);
+        StudyProgramTextView.setText(sr.getStudieretningNavn());
+        RegisterRecyclerView.setVisibility(View.INVISIBLE);
+    }
+
+    private void checkRegisterStudentInput(){
+        if(!EmailEditText.getText().toString().equals("") && !NameEditText.getText().toString().equals("") && !PasswordEditText.getText().toString().equals("") && !StudyProgramTextView.getText().toString().equals("")) {
+            if(PasswordEditText.getText().toString().length() > 7 && NameEditText.getText().toString().length() > 4) {
+                String regex = "^[\\w!#$%&’*+/=?`{|}~^-]+(?:\\.[\\w!#$%&’*+/=?`{|}~^-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,6}$";
+                Pattern pattern = Pattern.compile(regex);
+                Matcher matcher = pattern.matcher(EmailEditText.getText().toString());
+                if (matcher.matches()) {
+                    registerStudent();
+                } else {
+                    Toast.makeText(this, "Bad email", Toast.LENGTH_SHORT).show();
+                }
+            }
+            else{
+                Toast.makeText(this, "Password must be at least 8 characters. Username at least 5", Toast.LENGTH_SHORT).show();
+            }
+        }
+        else{
+            Toast.makeText(this, "Fill out all fields", Toast.LENGTH_SHORT).show();
         }
     }
 
     private void checkRegisterLecturerInput(){
         if(!EmailEditText.getText().toString().equals("") && !NameEditText.getText().toString().equals("") && !PasswordEditText.getText().toString().equals("")) {
-            if(PasswordEditText.getText().toString().length() > 7 && NameEditText.getText().toString().length() > 7) {
+            if(PasswordEditText.getText().toString().length() > 7 && NameEditText.getText().toString().length() > 4) {
                 String regex = "^[\\w!#$%&’*+/=?`{|}~^-]+(?:\\.[\\w!#$%&’*+/=?`{|}~^-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,6}$";
                 Pattern pattern = Pattern.compile(regex);
                 Matcher matcher = pattern.matcher(EmailEditText.getText().toString());
@@ -106,7 +158,7 @@ public class RegiActivity extends AppCompatActivity implements CourseRecyclerVie
                 }
             }
             else{
-                Toast.makeText(this, "Both password and username must be at least 8 characters", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Password must be at least 8 characters. Username at least 5", Toast.LENGTH_SHORT).show();
             }
         }
         else{
@@ -122,9 +174,25 @@ public class RegiActivity extends AppCompatActivity implements CourseRecyclerVie
         }
 
         Toast.makeText(this, "Registration complete", Toast.LENGTH_SHORT).show();
+
+        Intent intent = new Intent(this, SignInActivity.class);
+        startActivity(intent);
     }
 
-    private void fillCourseRecyclerView(String jsonString){
+    private void registerStudent(){
+        try {
+            createStudent();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        Toast.makeText(this, "Registration complete", Toast.LENGTH_SHORT).show();
+
+        Intent intent = new Intent(this, SignInActivity.class);
+        startActivity(intent);
+    }
+
+    /*private void fillCourseRecyclerView(String jsonString){
 
         ArrayList<Emne> courses = new ArrayList<>();
 
@@ -140,7 +208,7 @@ public class RegiActivity extends AppCompatActivity implements CourseRecyclerVie
         courseAdapter = new CourseRecyclerViewAdapter(this, courses);
         courseAdapter.setClickListener(this);
         recyclerView.setAdapter(courseAdapter);
-    }
+    }*/
 
     private void fillStudyProgramRecyclerView(String jsonString){
 
@@ -152,17 +220,33 @@ public class RegiActivity extends AppCompatActivity implements CourseRecyclerVie
         }
 
         // set up the RecyclerView
-        RecyclerView recyclerView = findViewById(R.id.registerRecyclerView);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        RegisterRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         studyProgramAdapter = new StudyProgramRecyclerViewAdapter(this, studyPrograms);
         studyProgramAdapter.setClickListener(this);
-        recyclerView.setAdapter(studyProgramAdapter);
+        RegisterRecyclerView.setAdapter(studyProgramAdapter);
     }
 
-    // fixes problem with two setClickListeners
+    /*// fixes problem with two setClickListeners
     @Override
     public void onPointerCaptureChanged(boolean hasCapture) {
 
+    }*/
+
+    private void createStudent() throws JSONException {
+        String json = "";
+
+        int kull = Integer.parseInt(ClassEditText.getText().toString());
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.accumulate("epost", EmailEditText.getText().toString());
+        jsonObject.accumulate("navn", NameEditText.getText().toString());
+        jsonObject.accumulate("passord", PasswordEditText.getText().toString());
+        jsonObject.accumulate("kull", ClassEditText.getText().toString());
+        jsonObject.accumulate("studieretning", sr.getIdStudieretning());
+        jsonObject.accumulate("key", 1);
+
+        json = jsonObject.toString();
+        sendPost(json, getString(R.string.ip) + "/api/person/create.php");
     }
 
     private void createForeleser() throws JSONException {
@@ -172,11 +256,11 @@ public class RegiActivity extends AppCompatActivity implements CourseRecyclerVie
         jsonObject.accumulate("epost", EmailEditText.getText().toString());
         jsonObject.accumulate("navn", NameEditText.getText().toString());
         jsonObject.accumulate("passord", PasswordEditText.getText().toString());
-        jsonObject.accumulate("bilde", NameEditText.getText().toString()+".png");
+        jsonObject.accumulate("bilde", EmailEditText.getText().toString()+".png");
         jsonObject.accumulate("key", 0);
 
         json = jsonObject.toString();
-        sendPost(json, "http://158.39.188.228/api/person/create.php");
+        sendPost(json, getString(R.string.ip) + "/api/person/create.php");
     }
 
     private void sendPost(final String json, final String urlString) {
@@ -213,47 +297,6 @@ public class RegiActivity extends AppCompatActivity implements CourseRecyclerVie
         thread.start();
     }
 
-
-
-
-
-    private void downloadEmnerJSON(final String urlWebService) {
-
-        class DownloadJSON extends AsyncTask<Void, Void, String> {
-
-            @Override
-            protected void onPreExecute() {
-                super.onPreExecute();
-            }
-
-
-            @Override
-            protected void onPostExecute(String s) {
-                super.onPostExecute(s);
-                fillCourseRecyclerView(s);
-            }
-
-            @Override
-            protected String doInBackground(Void... voids) {
-                try {
-                    URL url = new URL(urlWebService);
-                    HttpURLConnection con = (HttpURLConnection) url.openConnection();
-                    StringBuilder sb = new StringBuilder();
-                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(con.getInputStream()));
-                    String json;
-                    while ((json = bufferedReader.readLine()) != null) {
-                        sb.append(json + "\n");
-                    }
-                    return sb.toString().trim();
-                } catch (Exception e) {
-                    return null;
-                }
-            }
-        }
-        DownloadJSON getJSON = new DownloadJSON();
-        getJSON.execute();
-    }
-
     private void downloadStudieretningerJSON(final String urlWebService) {
 
         class DownloadJSON extends AsyncTask<Void, Void, String> {
@@ -267,7 +310,7 @@ public class RegiActivity extends AppCompatActivity implements CourseRecyclerVie
             @Override
             protected void onPostExecute(String s) {
                 super.onPostExecute(s);
-                fillStudyProgramRecyclerView(s);
+                jsonStringStudieretninger = s;
             }
 
             @Override
