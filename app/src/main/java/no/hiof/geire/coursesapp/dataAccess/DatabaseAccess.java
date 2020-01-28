@@ -1,16 +1,10 @@
 package no.hiof.geire.coursesapp.dataAccess;
 
-import android.os.AsyncTask;
-import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 
 import no.hiof.geire.coursesapp.model.Emne;
@@ -39,7 +33,7 @@ public class DatabaseAccess {
 
             //getting the data from the json object and putting it inside object array
             Melding message = new Melding(obj.optInt("idMelding"), obj.optString("innhold_melding"), obj.optInt("idForfatter"),
-                    obj.optString("emnekode"), obj.optBoolean("rapportert"), obj.optInt("idForeleser"), obj.optString("innhold_svar"));
+                    obj.optString("emnekode"), obj.optBoolean("rapportert"), obj.optInt("idForeleser"), obj.optString("innhold_svar"), obj.optInt("rapportert_av"));
             messages.add(message);
         }
 

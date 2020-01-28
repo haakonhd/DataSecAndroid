@@ -76,7 +76,7 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
     static final int REQUEST_IMAGE_CAPTURE = 1;
     Bitmap imageBitmap;
 
-    private Integer SignedInAs, id, AddCourseBtnPressed, SendMessageBtnPressed;
+    private Integer SignedInAs, id, AddCourseBtnPressed, SendMessageBtnPressed, MessageReplyBtnPressed;
     private String jsonStringForelesere, jsonStringPersoner, jsonStringEmner, jsonStringPersonHarEmne, jsonStringMeldinger, jsonStringStudieretninger, mText, navn;
 
     MessageRecyclerViewAdapter messageAdapter;
@@ -144,6 +144,9 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         MessageReplyBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                MessageReplyBtnPressed = 1;
+                SendMessageBtnPressed = 0;
+                AddCourseBtnPressed = 0;
                 ArrayList<Melding> messages = getMessages();
                 fillMeldingerRecyclerView(messages);
             }
@@ -154,6 +157,7 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
             public void onClick(View v) {
                 SendMessageBtnPressed = 1;
                 AddCourseBtnPressed = 0;
+                MessageReplyBtnPressed = 0;
                 ArrayList<Emne> emner = getLoggedInStudentsCourses();
                 fillStudentsEmnerRecyclerView(emner);
             }
@@ -169,14 +173,13 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         AddCourseBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                AddCourseBtnPressed = 1;
+                SendMessageBtnPressed = 0;
+                MessageReplyBtnPressed = 0;
                 if(SignedInAs == 1){
-                    SendMessageBtnPressed = 0;
-                    AddCourseBtnPressed = 1;
                     fillEmnerRecyclerView(jsonStringEmner);
                 }
                 else if(SignedInAs == 2){
-                    SendMessageBtnPressed = 0;
-                    AddCourseBtnPressed = 1;
                     fillEmnerRecyclerView(jsonStringEmner);
                 }
             }
@@ -203,7 +206,7 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
 
         if(SignedInAs == 1) {
             StatusTextView.setText(navn + " (Student)");
-            SendMessageBtn.setVisibility(View.VISIBLE);
+            //SendMessageBtn.setVisibility(View.VISIBLE);
             AddCourseBtn.setVisibility(View.VISIBLE);
             ChangePasswordBtn.setVisibility(View.VISIBLE);
         }
@@ -237,17 +240,31 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
                 String emnekode = courseAdapter.getItem(position).getEmnekode();
                 int foreleser = courseAdapter.getItem(position).getForeleser();
                 String emnenavn = courseAdapter.getItem(position).getEmnenavn();
-                sendCourseAccessRequestDialogBox(emnekode, foreleser, emnenavn);
+                sendCourseAccessRequestDialogBox(emnekode, foreleser, emnenavn, id);
             }
         }
         else if(SignedInAs == 2){
+            if(MessageReplyBtnPressed == 1) {
+                String emnekode = messageAdapter.getItem(position).getEmnekode();
+                int student = messageAdapter.getItem(position).getIdForfatter();
+                int idmelding = messageAdapter.getItem(position).getIdMelding();
+                String innholdMelding = messageAdapter.getItem(position).getInnhold_melding();
+                boolean rapportert = messageAdapter.getItem(position).isRappotert();
+                int rapportertAv = messageAdapter.getItem(position).getRapportert_av();
+                inputReplyDialogBox(emnekode, student, innholdMelding, idmelding, rapportert, rapportertAv);
+            }
 
-            String emnekode = messageAdapter.getItem(position).getEmnekode();
-            int student = messageAdapter.getItem(position).getIdForfatter();
-            int idmelding = messageAdapter.getItem(position).getIdMelding();
-            String innholdMelding = messageAdapter.getItem(position).getInnhold_melding();
-            boolean rapportert = messageAdapter.getItem(position).isRappotert();
-            inputReplyDialogBox(emnekode, student, innholdMelding, idmelding, rapportert);
+            if(AddCourseBtnPressed == 1){
+                String emnekode = courseAdapter.getItem(position).getEmnekode();
+                int foreleser = courseAdapter.getItem(position).getForeleser();
+                String emnenavn = courseAdapter.getItem(position).getEmnenavn();
+                int pin = courseAdapter.getItem(position).getPinNr();
+                try {
+                    emneToJson(emnekode, emnenavn, pin, foreleser);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
@@ -437,28 +454,22 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
 
     }
 
-    private void sendMessage(String mText, String emnekode, Integer foreleser) throws JSONException {
+    private void sendMessage(String mText, String emnekode, Integer foreleser, Integer id) throws JSONException {
         String json = "";
 
         JSONObject jsonObject = new JSONObject();
         jsonObject.accumulate("emnekode", emnekode);
-        jsonObject.accumulate("idForeleser", foreleser.toString());
         jsonObject.accumulate("idForfatter", id.toString());
         jsonObject.accumulate("innhold_melding", mText);
-        jsonObject.accumulate("innhold_svar", " ");
-        jsonObject.accumulate("rapportert", false);
 
         json = jsonObject.toString();
 
         sendPost(json);
     }
 
-    private void sendReply(String mText, String emnekode, Integer idStudent, String innholdMelding, Integer idMelding, boolean rapportert) throws JSONException {
+    private void sendReply(String mText, String emnekode, Integer idStudent, String innholdMelding, Integer idMelding, boolean rapportert, Integer rapportertAv) throws JSONException {
         String json = "";
-        String rapportertToString = "0";
-        if(rapportert){
-            rapportertToString = "1";
-        }
+        String rapportertToString = String.valueOf(rapportert);
 
         JSONObject jsonObject = new JSONObject();
         jsonObject.accumulate("idMelding", idMelding.toString());
@@ -468,24 +479,31 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         jsonObject.accumulate("innhold_melding", innholdMelding);
         jsonObject.accumulate("innhold_svar", mText);
         jsonObject.accumulate("rapportert", rapportertToString);
+        jsonObject.accumulate("rapportert_av", rapportertAv.toString());
 
         json = jsonObject.toString();
 
         updatePost(json);
     }
-
-    private void sendReport(Melding message) throws JSONException {
+    private void sendReport(Melding m) throws JSONException {
         String json = "";
-        String rapportertToString = "1";
+
+        String rapportertToString = String.valueOf(!m.isRappotert());
+        String rapportertAv = String.valueOf(m.getRapportert_av());
+
+        if(SignedInAs == 1){
+            rapportertAv = id.toString();
+        }
 
         JSONObject jsonObject = new JSONObject();
-        jsonObject.accumulate("idMelding", String.valueOf(message.getIdMelding()));
-        jsonObject.accumulate("emnekode", message.getEmnekode());
-        jsonObject.accumulate("idForeleser", String.valueOf(message.getIdForeleser()));
-        jsonObject.accumulate("idForfatter", String.valueOf(message.getIdForfatter()));
-        jsonObject.accumulate("innhold_melding", message.getInnhold_melding());
-        jsonObject.accumulate("innhold_svar", message.getInnhold_svar());
+        jsonObject.accumulate("idMelding", String.valueOf(m.getIdMelding()));
+        jsonObject.accumulate("emnekode", m.getEmnekode());
+        jsonObject.accumulate("idForeleser", String.valueOf(m.getIdForeleser()));
+        jsonObject.accumulate("idForfatter", String.valueOf(m.getIdForeleser()));
+        jsonObject.accumulate("innhold_melding", m.getInnhold_melding());
+        jsonObject.accumulate("innhold_svar", m.getInnhold_svar());
         jsonObject.accumulate("rapportert", rapportertToString);
+        jsonObject.accumulate("rapportert_av", rapportertAv);
 
         json = jsonObject.toString();
 
@@ -498,6 +516,47 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
             public void run() {
                 try {
                     URL url = new URL(getString(R.string.ip) + "/api/melding/update.php");
+                    HttpURLConnection httpCon = (HttpURLConnection) url.openConnection();
+                    httpCon.setDoOutput(true);
+                    httpCon.setDoInput(true);
+                    httpCon.setRequestMethod("PUT");
+                    httpCon.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+                    httpCon.setRequestProperty("Accept","application/json");
+                    OutputStreamWriter out = new OutputStreamWriter(httpCon.getOutputStream());
+                    out.write(json);
+                    out.close();
+
+                    httpCon.getInputStream();
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        thread.start();
+    }
+
+    private void emneToJson(String emnekode, String emnenavn, int pin, Integer foreleser) throws JSONException {
+        String json = "";
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.accumulate("emnekode", emnekode);
+        jsonObject.accumulate("emnenavn", emnenavn);
+        jsonObject.accumulate("PIN", pin);
+        jsonObject.accumulate("foreleser", id.toString());
+
+        json = jsonObject.toString();
+
+        updateEmne(json);
+    }
+
+    public void updateEmne(final String json){
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    URL url = new URL(getString(R.string.ip) + "/api/emne/update.php");
                     HttpURLConnection httpCon = (HttpURLConnection) url.openConnection();
                     httpCon.setDoOutput(true);
                     httpCon.setDoInput(true);
@@ -553,19 +612,19 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         thread.start();
     }
 
-    public void sendCourseAccessRequest(Integer idstudent, String emnekode) throws JSONException {
+    public void sendCourseAccessRequest(String mText, Integer idstudent, String emnekode, String innholdMelding, int idMelding, boolean rapportert, Integer rapportertAv) throws JSONException {
         String json = "";
 
         JSONObject jsonObject = new JSONObject();
         jsonObject.accumulate("person_id", idstudent.toString());
         jsonObject.accumulate("emne_emnekode", emnekode);
-        jsonObject.accumulate("tilgang_til_emne", true);
+        jsonObject.accumulate("tilgang_til_emne", "1");
 
         json = jsonObject.toString();
 
         createPersonHarEmne(json);
 
-
+        sendReply(mText, emnekode, idstudent, innholdMelding, idMelding, rapportert, rapportertAv);
     }
 
     public void createPersonHarEmne(final String json) {
@@ -620,7 +679,7 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
             public void onClick(DialogInterface dialog, int which) {
                 mText = input.getText().toString();
                 try {
-                    sendMessage(mText, emnekode, foreleser);
+                    sendMessage(mText, emnekode, foreleser, id);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -636,9 +695,9 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         builder.show();
     }
 
-    private void sendCourseAccessRequestDialogBox(final String emnekode, final int foreleser, final String emnenavn){
+    private void sendCourseAccessRequestDialogBox(final String emnekode, final int foreleser, final String emnenavn, final int idStud){
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Request access to '" + emnenavn + "'");
+        builder.setTitle("Request access to '" + emnenavn + "'.\n Add a nice message on why you want access!");
 
         // Set up the input
         final EditText input = new EditText(this);
@@ -652,7 +711,7 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
             public void onClick(DialogInterface dialog, int which) {
                 mText = input.getText().toString();
                 try {
-
+                    sendMessage(mText, emnekode, foreleser, idStud);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -668,7 +727,7 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         builder.show();
     }
 
-    private void inputReplyDialogBox(final String emnekode, final int idStudent, final String innholdMelding, final int idMelding, final boolean rapportert){
+    private void inputReplyDialogBox(final String emnekode, final int idStudent, final String innholdMelding, final int idMelding, final boolean rapportert, final Integer rapportertAv){
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Enter reply");
 
@@ -679,12 +738,23 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         builder.setView(input);
 
         // Set up the buttons
-        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+        builder.setPositiveButton("Send reply and deny student access", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 mText = input.getText().toString();
                 try {
-                    sendReply(mText, emnekode, idStudent, innholdMelding, idMelding, rapportert);
+                    sendReply(mText, emnekode, idStudent, innholdMelding, idMelding, rapportert, rapportertAv);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        builder.setNeutralButton("Send reply and give student access", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                mText = input.getText().toString();
+                try {
+                    sendCourseAccessRequest(mText, idStudent, emnekode, innholdMelding, idMelding, rapportert, rapportertAv);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -694,16 +764,6 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.cancel();
-            }
-        });
-        builder.setNeutralButton("Send reply and give student access", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                try {
-                    sendCourseAccessRequest(idStudent, emnekode);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
             }
         });
 

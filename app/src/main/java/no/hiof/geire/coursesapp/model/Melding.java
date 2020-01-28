@@ -9,6 +9,7 @@ public class Melding {
     private boolean rappotert;
     private int idForeleser;
     private String innhold_svar;
+    private int rapportert_av;
 
     public Melding(String innhold_melding, int idForfatter, String emnekode, boolean rappotert, int idForeleser, String innhold_svar) {
         this.innhold_melding = innhold_melding;
@@ -22,7 +23,7 @@ public class Melding {
     public Melding() {
     }
 
-    public Melding(int idMelding, String innhold_melding, int idForfatter, String emnekode, boolean rappotert, Integer idForeleser, String innhold_svar) {
+    public Melding(int idMelding, String innhold_melding, int idForfatter, String emnekode, boolean rappotert, Integer idForeleser, String innhold_svar, int rapportert_av) {
         this.idMelding = idMelding;
         this.innhold_melding = innhold_melding;
         this.idForfatter = idForfatter;
@@ -30,6 +31,7 @@ public class Melding {
         this.rappotert = rappotert;
         this.idForeleser = idForeleser;
         this.innhold_svar = innhold_svar;
+        this.rapportert_av = rapportert_av;
     }
 
     public int getIdMelding() {
@@ -86,5 +88,13 @@ public class Melding {
 
     public void setInnhold_svar(String innholdSvar) {
         this.innhold_svar = innhold_svar;
+    }
+
+    public int getRapportert_av() {
+        return rapportert_av;
+    }
+
+    public void setRapportert_av(int rapportert_av) {
+        this.rapportert_av = rapportert_av;
     }
 }
