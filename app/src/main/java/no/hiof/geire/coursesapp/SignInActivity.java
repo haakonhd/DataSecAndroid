@@ -23,6 +23,8 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static no.hiof.geire.coursesapp.dataAccess.DatabaseAccess.getForeleserArray;
 import static no.hiof.geire.coursesapp.dataAccess.DatabaseAccess.getPersonArray;
@@ -96,36 +98,47 @@ public class SignInActivity extends AppCompatActivity {
             for (int i = 0; i < persons.size(); i++) {
                 String email = persons.get(i).getEpost();
                 String password = persons.get(i).getPassord();
-                if (EmailTextView.getText().toString().equals(email) && PasswordTextView.getText().toString().equals(password)) {
 
-                    for (int x = 0; x < students.size(); x++) {
+                String regex = "^[\\w!#$%&’*+/=?`{|}~^-]+(?:\\.[\\w!#$%&’*+/=?`{|}~^-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,6}$";
+                Pattern pattern = Pattern.compile(regex);
+                Matcher matcher = pattern.matcher(EmailTextView.getText().toString());
 
-                        if (students.get(x).getIdStudent() == persons.get(i).getIdPerson()) {
+                if (matcher.matches()){
+                    if (EmailTextView.getText().toString().equals(email) && PasswordTextView.getText().toString().equals(password)) {
 
-                            Intent intent = new Intent(this, MainActivity.class);
-                            intent.putExtra("logged in as", 1);
-                            intent.putExtra("id", persons.get(i).getIdPerson());
-                            intent.putExtra("name", persons.get(i).getNavn());
-                            startActivity(intent);
-                            foundUser = true;
-                            break;
+                        for (int x = 0; x < students.size(); x++) {
+
+                            if (students.get(x).getIdStudent() == persons.get(i).getIdPerson()) {
+
+                                Intent intent = new Intent(this, MainActivity.class);
+                                intent.putExtra("logged in as", 1);
+                                intent.putExtra("id", persons.get(i).getIdPerson());
+                                intent.putExtra("name", persons.get(i).getNavn());
+                                startActivity(intent);
+                                foundUser = true;
+                                break;
+                            }
                         }
-                    }
 
-                    for (int y = 0; y < lecturers.size(); y++) {
+                        for (int y = 0; y < lecturers.size(); y++) {
 
-                        if (lecturers.get(y).getIdForeleser() == persons.get(i).getIdPerson()) {
+                            if (lecturers.get(y).getIdForeleser() == persons.get(i).getIdPerson()) {
 
-                            Intent intent = new Intent(this, MainActivity.class);
-                            intent.putExtra("logged in as", 2);
-                            intent.putExtra("id", persons.get(i).getIdPerson());
-                            intent.putExtra("name", persons.get(i).getNavn());
-                            startActivity(intent);
-                            foundUser = true;
-                            break;
+                                Intent intent = new Intent(this, MainActivity.class);
+                                intent.putExtra("logged in as", 2);
+                                intent.putExtra("id", persons.get(i).getIdPerson());
+                                intent.putExtra("name", persons.get(i).getNavn());
+                                startActivity(intent);
+                                foundUser = true;
+                                break;
+                            }
                         }
                     }
                 }
+                else{
+                    Toast.makeText(this, "Email not valid format", Toast.LENGTH_SHORT).show();
+                }
+
             }
         }
         if(foundUser == false) {

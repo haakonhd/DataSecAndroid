@@ -18,7 +18,6 @@ import no.hiof.geire.coursesapp.model.Studieretning;
 public class DatabaseAccess {
 
 
-
     public static ArrayList<Melding> getMeldingArray (String json) throws JSONException {
         //creating a json array from the json string
         JSONObject jsnobject = new JSONObject(json);
