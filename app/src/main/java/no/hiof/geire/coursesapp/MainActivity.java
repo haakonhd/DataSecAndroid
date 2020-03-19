@@ -8,6 +8,7 @@ import no.hiof.geire.coursesapp.adapter.CourseRecyclerViewAdapter;
 import no.hiof.geire.coursesapp.adapter.LecturerRecyclerViewAdapter;
 import no.hiof.geire.coursesapp.adapter.MessageRecyclerViewAdapter;
 import no.hiof.geire.coursesapp.adapter.StudyProgramRecyclerViewAdapter;
+import no.hiof.geire.coursesapp.dataAccess.GelfLogger;
 import no.hiof.geire.coursesapp.model.Emne;
 import no.hiof.geire.coursesapp.model.Foreleser;
 import no.hiof.geire.coursesapp.model.Melding;
@@ -42,6 +43,12 @@ import android.widget.Toast;
 
 import com.google.gson.Gson;
 
+import org.graylog2.gelfclient.GelfConfiguration;
+import org.graylog2.gelfclient.GelfMessage;
+import org.graylog2.gelfclient.GelfMessageBuilder;
+import org.graylog2.gelfclient.GelfMessageLevel;
+import org.graylog2.gelfclient.GelfTransports;
+import org.graylog2.gelfclient.transport.GelfTransport;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -52,6 +59,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
@@ -122,6 +130,8 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         GoToSignInBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                GelfLogger gl = new GelfLogger();
+                gl.gelfLogger("SignInBtn was pressed!");
                 openSignInActivity();
             }
         });
@@ -223,7 +233,6 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
             fillForelesereRecyclerView();
         }
     }
-
 
     @Override
     public void onItemClick(View view, int position) {
@@ -485,6 +494,7 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
 
         updatePost(json);
     }
+
     private void sendReport(Melding m) throws JSONException {
         String json = "";
 
@@ -849,6 +859,7 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
+        super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             Bundle extras = data.getExtras();
             imageBitmap = (Bitmap) extras.get("data");
