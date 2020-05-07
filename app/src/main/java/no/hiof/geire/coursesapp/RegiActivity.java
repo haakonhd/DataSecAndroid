@@ -280,7 +280,7 @@ public class RegiActivity extends AppCompatActivity implements StudyProgramRecyc
         jsonObject.accumulate("emner", CourseTextView.getText().toString());
 
         json = jsonObject.toString();
-        sendPostNewUser(json, getString(R.string.ip) + "api/foreleser/opprettForeleser.php ");
+        sendPostNewUser(json, getString(R.string.ip) + "/api/foreleser/opprettForeleser.php ");
     }
 
     private void sendPostNewUser(final String json, final String urlString) {
