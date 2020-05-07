@@ -300,12 +300,12 @@ public class SignInActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
                 try {
-                    jsonObject.accumulate("idPerson", s);
+                    jsonObject.accumulate("passord", password);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
                 try {
-                    jsonObject.accumulate("passord", password);
+                    jsonObject.accumulate("idPerson", s);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -550,7 +550,9 @@ public class SignInActivity extends AppCompatActivity {
                     Log.i("STATUS", String.valueOf(conn.getResponseCode()));
                     Log.i("MSG" , conn.getResponseMessage());
 
-                    person = getPerson(response);
+                    if(String.valueOf(conn.getResponseCode()).equals("200")){
+                        Person person = getPerson(jsonStringPersonInfo);
+                    }
 
                     Toast.makeText(getApplicationContext(), person.toString(), Toast.LENGTH_SHORT).show();
 

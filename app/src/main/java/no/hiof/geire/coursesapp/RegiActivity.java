@@ -268,6 +268,12 @@ public class RegiActivity extends AppCompatActivity implements StudyProgramRecyc
     }
 
     private void createForeleser() throws JSONException {
+        String jsone = "";
+        JSONObject jsonObjecte = new JSONObject();
+        jsonObjecte.accumulate("emne", "Big Data");
+        jsone = jsonObjecte.toString();
+
+
         String json = "";
 
         //String password = makeHash(PasswordEditText.getText().toString());
@@ -277,7 +283,7 @@ public class RegiActivity extends AppCompatActivity implements StudyProgramRecyc
         jsonObject.accumulate("epost", EmailEditText.getText().toString());
         jsonObject.accumulate("passord", PasswordEditText.getText().toString());
         jsonObject.accumulate("bilde", EmailEditText.getText().toString()+".png");
-        jsonObject.accumulate("emner", CourseTextView.getText().toString());
+        jsonObject.accumulate("emner", jsone);
 
         json = jsonObject.toString();
         sendPostNewUser(json, getString(R.string.ip) + "/api/foreleser/opprettForeleser.php ");
