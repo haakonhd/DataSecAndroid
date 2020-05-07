@@ -1,5 +1,32 @@
 package no.hiof.geire.coursesapp;
 
+import android.annotation.SuppressLint;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.provider.MediaStore;
+import android.text.InputType;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.ArrayList;
+
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -7,67 +34,12 @@ import androidx.recyclerview.widget.RecyclerView;
 import no.hiof.geire.coursesapp.adapter.CourseRecyclerViewAdapter;
 import no.hiof.geire.coursesapp.adapter.LecturerRecyclerViewAdapter;
 import no.hiof.geire.coursesapp.adapter.MessageRecyclerViewAdapter;
-import no.hiof.geire.coursesapp.adapter.StudyProgramRecyclerViewAdapter;
 import no.hiof.geire.coursesapp.dataAccess.GelfLogger;
 import no.hiof.geire.coursesapp.model.Emne;
 import no.hiof.geire.coursesapp.model.Foreleser;
 import no.hiof.geire.coursesapp.model.Melding;
-import no.hiof.geire.coursesapp.dataAccess.DatabaseAccess;
 import no.hiof.geire.coursesapp.model.Person;
 import no.hiof.geire.coursesapp.model.PersonHarEmne;
-import no.hiof.geire.coursesapp.model.Studieretning;
-
-import android.Manifest;
-import android.annotation.SuppressLint;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.os.AsyncTask;
-import android.os.Build;
-import android.os.Bundle;
-import android.provider.MediaStore;
-import android.text.InputType;
-import android.util.Log;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.TextView;
-import android.widget.Toast;
-
-
-import com.google.gson.Gson;
-
-import org.graylog2.gelfclient.GelfConfiguration;
-import org.graylog2.gelfclient.GelfMessage;
-import org.graylog2.gelfclient.GelfMessageBuilder;
-import org.graylog2.gelfclient.GelfMessageLevel;
-import org.graylog2.gelfclient.GelfTransports;
-import org.graylog2.gelfclient.transport.GelfTransport;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static no.hiof.geire.coursesapp.dataAccess.DatabaseAccess.getEmneArray;
 import static no.hiof.geire.coursesapp.dataAccess.DatabaseAccess.getForeleserArray;
@@ -102,12 +74,13 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
         id = intent.getIntExtra("id", 0);
         navn = intent.getStringExtra("name");
 
-        downloadMeldingerJSON(getString(R.string.ip) + "/api/melding/read.php");
+        /*downloadMeldingerJSON(getString(R.string.ip) + "/api/melding/read.php");
         downloadForelesereJSON(getString(R.string.ip) + "/api/foreleser/read.php");
         downloadPersonerJSON(getString(R.string.ip) + "/api/person/read.php");
-        downloadEmnerJSON(getString(R.string.ip) + "/api/emne/read.php");
-        downloadPersonHarEmneJSON(getString(R.string.ip) + "/api/person_har_emne/read.php");
-        downloadStudieretningerJSON(getString(R.string.ip) + "/api/studieretninger/read.php");
+        downloadPersonHarEmneJSON(getString(R.string.ip) + "/api/person_har_emne/read.php");*/
+
+        downloadEmnerJSON(getString(R.string.ip) + "/api/emne/getEmner.php");//OK
+        downloadStudieretningerJSON(getString(R.string.ip) + "/api/studieretning/getStudieretninger.php");//OK
 
         StatusTextView = findViewById(R.id.statusTextView);
         GoToSignInBtn = findViewById(R.id.goToSignInBtn);
@@ -295,7 +268,7 @@ public class MainActivity extends AppCompatActivity implements MessageRecyclerVi
             e.printStackTrace();
         }
         for(int i = 0; i < persons.size(); i++){
-            if(persons.get(i).getIdPerson() == id){
+            if(persons.get(i).getIdPerson().equals(id)){
                 navn = persons.get(i).getNavn();
                 break;
             }

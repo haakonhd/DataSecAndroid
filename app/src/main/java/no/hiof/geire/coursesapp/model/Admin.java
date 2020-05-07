@@ -2,9 +2,9 @@ package no.hiof.geire.coursesapp.model;
 
 public class Admin extends Person{
 
-    private int idAdmin;
+    private String idAdmin;
 
-    public Admin(int idAdmin) {
+    public Admin(String idAdmin) {
         this.idAdmin = idAdmin;
     }
 
@@ -12,11 +12,11 @@ public class Admin extends Person{
     }
 
 
-    public int getIdAdmin() {
+    public String getIdAdmin() {
         return idAdmin;
     }
 
-    public void setIdAdmin(int idAdmin) {
+    public void setIdAdmin(String idAdmin) {
         this.idAdmin = idAdmin;
     }
 }

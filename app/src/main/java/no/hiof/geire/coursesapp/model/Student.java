@@ -1,12 +1,14 @@
 package no.hiof.geire.coursesapp.model;
 
-public class Student extends Person{
+import java.io.Serializable;
+
+public class Student extends Person implements Serializable {
 
     private int idStudent;
     private String studieretning;
     private int kull;
 
-    public Student(int idPerson, String epost, String navn, String passord, boolean godkjentBruker, int idStudent, String studieretning, int kull) {
+    public Student(String idPerson, String epost, String navn, String passord, boolean godkjentBruker, int idStudent, String studieretning, int kull) {
         super(idPerson, epost, navn, passord, godkjentBruker);
         this.idStudent = idStudent;
         this.studieretning = studieretning;

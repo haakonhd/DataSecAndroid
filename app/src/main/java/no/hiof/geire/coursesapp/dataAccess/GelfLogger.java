@@ -9,7 +9,7 @@ import org.graylog2.gelfclient.transport.GelfTransport;
 
 import java.net.InetSocketAddress;
 
-
+//Greylog
 public class GelfLogger {
 
     public void gelfLogger(String appMessage){

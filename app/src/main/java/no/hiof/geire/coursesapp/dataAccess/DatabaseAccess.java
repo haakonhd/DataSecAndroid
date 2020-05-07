@@ -142,12 +142,22 @@ public class DatabaseAccess {
             JSONObject obj= jsonArray.getJSONObject(i);
 
             //getting the data from the json object and putting it inside object array
-            Person person = new Person(obj.optInt("idPerson"), obj.optString("epost"), obj.optString("navn"),
+            Person person = new Person(obj.optString("idPerson"), obj.optString("epost"), obj.optString("navn"),
                     obj.optString("passord"), obj.optBoolean("godkjent_bruker"));
             persons.add(person);
         }
 
         return persons;
+    }
+
+    public static Person getPerson (String json) throws JSONException {
+        //creating a json array from the json string
+        JSONObject obj = new JSONObject(json);
+
+        Person person = new Person(obj.optString("idPerson"), obj.optString("epost"), obj.optString("navn"),
+                    obj.optString("passord"), obj.optBoolean("godkjent_bruker"));
+
+        return person;
     }
 
     public static ArrayList<PersonHarEmne> getPersonHarEmneArray (String json) throws JSONException {

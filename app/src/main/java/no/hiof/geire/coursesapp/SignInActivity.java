@@ -1,40 +1,42 @@
 package no.hiof.geire.coursesapp;
 
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import no.hiof.geire.coursesapp.model.Foreleser;
-import no.hiof.geire.coursesapp.model.Person;
-import no.hiof.geire.coursesapp.model.Student;
-import no.hiof.geire.coursesapp.dataAccess.DatabaseAccess;
-
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import org.json.JSONException;
+import org.json.JSONObject;
+import org.mindrot.jbcrypt.BCrypt;
 
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.security.SecureRandom;
+import java.util.Base64;
 
-import static no.hiof.geire.coursesapp.dataAccess.DatabaseAccess.getForeleserArray;
-import static no.hiof.geire.coursesapp.dataAccess.DatabaseAccess.getPersonArray;
-import static no.hiof.geire.coursesapp.dataAccess.DatabaseAccess.getStudentArray;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import no.hiof.geire.coursesapp.model.Person;
 
+import static no.hiof.geire.coursesapp.dataAccess.DatabaseAccess.getPerson;
+
+@RequiresApi(api = Build.VERSION_CODES.O)
 public class SignInActivity extends AppCompatActivity {
 
     private Button SignInBtn, RegisterBtn;
     private TextView EmailTextView, PasswordTextView;
-    private String jsonStringPersoner, jsonStringForelesere, jsonStringStudenter;
+    private String jsonStringPersoner, jsonStringForelesere, jsonStringStudenter, jsonStringPersonInfo;
+    private InputValidation iv = new InputValidation();
 
 
     @Override
@@ -47,9 +49,9 @@ public class SignInActivity extends AppCompatActivity {
         EmailTextView = (TextView) findViewById(R.id.emailTextView);
         PasswordTextView = (TextView) findViewById(R.id.passwordTexView);
 
-        downloadForelesereJSON(getString(R.string.ip) + "/api/foreleser/read.php");
+        /*downloadForelesereJSON(getString(R.string.ip) + "/api/foreleser/read.php");
         downloadPersonerJSON(getString(R.string.ip) + "/api/person/read.php");
-        downloadStudenterJSON(getString(R.string.ip) + "/api/student/read.php");
+        downloadStudenterJSON(getString(R.string.ip) + "/api/student/read.php");*/
 
         SignInBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -67,6 +69,64 @@ public class SignInActivity extends AppCompatActivity {
     }
 
     public void checkEmailAndPassword(){
+
+        if(iv.isInputEmpty(EmailTextView.getText().toString()) || iv.isInputEmpty(PasswordTextView.getText().toString())) {
+            Toast.makeText(this, "Email and password please", Toast.LENGTH_SHORT).show();
+        }
+        else {
+            if(iv.emailIsValid(EmailTextView.getText().toString()) || iv.isInputEmpty(PasswordTextView.getText().toString()))
+            try {
+                checkPassword(EmailTextView.getText().toString(), PasswordTextView.getText().toString());
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+
+    public void checkPassword(String userEmail, String password) throws JSONException {
+
+        //String passwordHash = makeHash(password);
+        String json = "";
+        JSONObject jsonObject2 = new JSONObject();
+        jsonObject2.accumulate("epost", userEmail);
+        jsonObject2.accumulate("passord", password);
+        json = jsonObject2.toString();
+
+        sendPostPasswordRight("http://158.39.188.222/api/person/passordErRiktig.php", json);
+    }
+
+    public void tokenShoit(String userEmail, String password) throws JSONException {
+
+        getIdFromEmail("http://158.39.188.222/api/person/getIdFraEpost.php?epost=" + userEmail, password);
+    }
+
+    private static final SecureRandom secureRandom = new SecureRandom(); //threadsafe
+    private static final Base64.Encoder base64Encoder = Base64.getUrlEncoder(); //threadsafe
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public static String generateNewToken() {
+        byte[] randomBytes = new byte[32];
+        secureRandom.nextBytes(randomBytes);
+        String string = base64Encoder.encodeToString(randomBytes);
+
+        return string;
+    }
+
+    Person person;
+
+    public void getInfoForLoggedInUser(String idPerson, String sessionToken) throws JSONException {
+        String token = "";
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.accumulate("idPerson", idPerson);
+        jsonObject.accumulate("sessionToken", sessionToken);
+        token = jsonObject.toString();
+
+        sendPostGetPerson("http://158.39.188.222/api/person/getPersonInfo.php", token);
+    }
+
+
+    /*public void checkEmailAndPassword2(){
 
         int logInValue = 0;
         Boolean foundUser = false;
@@ -144,7 +204,7 @@ public class SignInActivity extends AppCompatActivity {
         if(foundUser == false) {
             Toast.makeText(this, "Email and/or password not valid", Toast.LENGTH_SHORT).show();
         }
-    }
+    }*/
 
     public void openRegiActivity(int registerValue){
 
@@ -175,6 +235,106 @@ public class SignInActivity extends AppCompatActivity {
 
 
     //---------------------------Database stuff-------------------------------------------------------------------------------------------------
+
+    private void getPersonInfoJSON(final String urlWebService) {
+
+        class DownloadJSON extends AsyncTask<Void, Void, String> {
+
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+            }
+
+
+            @Override
+            protected void onPostExecute(String s) {
+                super.onPostExecute(s);
+                jsonStringPersonInfo = s;
+            }
+
+            @Override
+            protected String doInBackground(Void... voids) {
+                try {
+                    URL url = new URL(urlWebService);
+                    HttpURLConnection con = (HttpURLConnection) url.openConnection();
+                    StringBuilder sb = new StringBuilder();
+                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                    String json;
+                    while ((json = bufferedReader.readLine()) != null) {
+                        sb.append(json + "\n");
+                    }
+                    return sb.toString().trim();
+                } catch (Exception e) {
+                    return null;
+                }
+            }
+        }
+        DownloadJSON getJSON = new DownloadJSON();
+        getJSON.execute();
+    }
+
+    String jsonStringUserId;
+
+    private void getIdFromEmail(final String urlWebService, final String password) {
+
+        class DownloadJSON extends AsyncTask<Void, Void, String> {
+
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+            }
+
+
+            @Override
+            protected void onPostExecute(String s) {
+                super.onPostExecute(s);
+                String token = generateNewToken();
+
+                jsonStringUserId = s;
+
+                String newSessionTokenParams = "";
+                JSONObject jsonObject = new JSONObject();
+                try {
+                    jsonObject.accumulate("sessionToken", token);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    jsonObject.accumulate("idPerson", s);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    jsonObject.accumulate("passord", password);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                newSessionTokenParams = jsonObject.toString();
+
+                sendPostSetSessionToken("http://158.39.188.222/api/person/setSessionToken.php", newSessionTokenParams, token);
+            }
+
+            @Override
+            protected String doInBackground(Void... voids) {
+                try {
+                    URL url = new URL(urlWebService);
+                    HttpURLConnection con = (HttpURLConnection) url.openConnection();
+                    StringBuilder sb = new StringBuilder();
+                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                    String json;
+                    while ((json = bufferedReader.readLine()) != null) {
+                        sb.append(json + "\n");
+                    }
+                    return sb.toString().trim();
+                } catch (Exception e) {
+                    return null;
+                }
+            }
+        }
+        DownloadJSON getJSON = new DownloadJSON();
+        getJSON.execute();
+    }
+
 
     private void setJsonStringForelesere(String json){
         jsonStringForelesere = json;
@@ -289,5 +449,211 @@ public class SignInActivity extends AppCompatActivity {
         }
         DownloadJSON getJSON = new DownloadJSON();
         getJSON.execute();
+    }
+
+    String response = "";
+
+    private void sendPost(final String urlString, final String json) {
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    URL url = new URL(urlString);
+                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("POST");
+                    conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+                    conn.setRequestProperty("Accept","application/json");
+                    conn.setDoOutput(true);
+                    conn.setDoInput(true);
+
+                    Log.i("JSON", json);
+                    DataOutputStream os = new DataOutputStream(conn.getOutputStream());
+                    //os.writeBytes(URLEncoder.encode(jsonParam.toString(), "UTF-8"));
+                    os.writeBytes(json);
+
+                    os.flush();
+                    os.close();
+
+                    Log.i("STATUS", String.valueOf(conn.getResponseCode()));
+                    Log.i("MSG" , conn.getResponseMessage());
+
+                    response = conn.getResponseMessage();
+
+                    conn.disconnect();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        thread.start();
+    }
+
+    private void downloadPersonJSON(final String urlWebService) {
+
+        class DownloadJSON extends AsyncTask<Void, Void, String> {
+
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+            }
+
+
+            @Override
+            protected void onPostExecute(String s) {
+                super.onPostExecute(s);
+                jsonStringStudenter = s;
+            }
+
+            @Override
+            protected String doInBackground(Void... voids) {
+                try {
+                    URL url = new URL(urlWebService);
+                    HttpURLConnection con = (HttpURLConnection) url.openConnection();
+                    StringBuilder sb = new StringBuilder();
+                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                    String json;
+                    while ((json = bufferedReader.readLine()) != null) {
+                        sb.append(json + "\n");
+                    }
+                    return sb.toString().trim();
+                } catch (Exception e) {
+                    return null;
+                }
+            }
+        }
+        DownloadJSON getJSON = new DownloadJSON();
+        getJSON.execute();
+    }
+
+    private void sendPostGetPerson(final String urlString, final String json) {
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    URL url = new URL(urlString);
+                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("POST");
+                    conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+                    conn.setRequestProperty("Accept","application/json");
+                    conn.setDoOutput(true);
+                    conn.setDoInput(true);
+
+                    Log.i("JSON", json);
+                    DataOutputStream os = new DataOutputStream(conn.getOutputStream());
+                    //os.writeBytes(URLEncoder.encode(jsonParam.toString(), "UTF-8"));
+                    os.writeBytes(json);
+
+                    os.flush();
+                    os.close();
+
+                    Log.i("STATUS", String.valueOf(conn.getResponseCode()));
+                    Log.i("MSG" , conn.getResponseMessage());
+
+                    person = getPerson(response);
+
+                    Toast.makeText(getApplicationContext(), person.toString(), Toast.LENGTH_SHORT).show();
+
+
+                    conn.disconnect();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        thread.start();
+    }
+
+    private String makeHash(String password) {
+        String hashed = BCrypt.hashpw(password, BCrypt.gensalt());
+
+        return hashed;
+    }
+
+    private void sendPostPasswordRight(final String urlString, final String json) {
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    URL url = new URL(urlString);
+                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("POST");
+                    conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+                    conn.setRequestProperty("Accept","application/json");
+                    conn.setDoOutput(true);
+                    conn.setDoInput(true);
+
+                    Log.i("JSON", json);
+                    DataOutputStream os = new DataOutputStream(conn.getOutputStream());
+                    //os.writeBytes(URLEncoder.encode(jsonParam.toString(), "UTF-8"));
+                    os.writeBytes(json);
+
+                    os.flush();
+                    os.close();
+
+                    Log.i("STATUS", String.valueOf(conn.getResponseCode()));
+                    Log.i("MSG" , conn.getResponseMessage());
+
+                    if(String.valueOf(conn.getResponseCode()).equals("200")) {
+
+                        try {
+                            tokenShoit(EmailTextView.getText().toString(), PasswordTextView.getText().toString());
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    conn.disconnect();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        thread.start();
+    }
+
+    private void sendPostSetSessionToken(final String urlString, final String json, final String token) {
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    URL url = new URL(urlString);
+                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("POST");
+                    conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+                    conn.setRequestProperty("Accept","application/json");
+                    conn.setDoOutput(true);
+                    conn.setDoInput(true);
+
+                    Log.i("JSON", json);
+                    DataOutputStream os = new DataOutputStream(conn.getOutputStream());
+                    //os.writeBytes(URLEncoder.encode(jsonParam.toString(), "UTF-8"));
+                    os.writeBytes(json);
+
+                    os.flush();
+                    os.close();
+
+                    Log.i("STATUS", String.valueOf(conn.getResponseCode()));
+                    Log.i("MSG" , conn.getResponseMessage());
+
+                    if(String.valueOf(conn.getResponseCode()).equals("200")) {
+
+                        try {
+                            getInfoForLoggedInUser(jsonStringUserId, token);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    conn.disconnect();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        thread.start();
     }
 }

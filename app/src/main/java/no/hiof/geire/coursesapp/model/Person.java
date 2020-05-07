@@ -1,14 +1,16 @@
 package no.hiof.geire.coursesapp.model;
 
-public class Person {
+import java.io.Serializable;
 
-    private int idPerson;
+public class Person implements Serializable {
+
+    private String idPerson;
     private String epost;
     private String navn;
     private String passord;
     private boolean godkjentBruker;
 
-    public Person(int idPerson, String epost, String navn, String passord, boolean godkjentBruker) {
+    public Person(String idPerson, String epost, String navn, String passord, boolean godkjentBruker) {
         this.idPerson = idPerson;
         this.epost = epost;
         this.navn = navn;
@@ -20,11 +22,11 @@ public class Person {
     }
 
 
-    public int getIdPerson() {
+    public String getIdPerson() {
         return idPerson;
     }
 
-    public void setIdPerson(int idPerson) {
+    public void setIdPerson(String idPerson) {
         this.idPerson = idPerson;
     }
 

@@ -1,28 +1,15 @@
 package no.hiof.geire.coursesapp;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import no.hiof.geire.coursesapp.adapter.CourseRecyclerViewAdapter;
-import no.hiof.geire.coursesapp.adapter.MessageRecyclerViewAdapter;
-import no.hiof.geire.coursesapp.adapter.StudyProgramRecyclerViewAdapter;
-import no.hiof.geire.coursesapp.dataAccess.DatabaseAccess;
-import no.hiof.geire.coursesapp.model.Emne;
-import no.hiof.geire.coursesapp.model.Studieretning;
-
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.ResultReceiver;
 import android.util.Log;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -32,10 +19,13 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import static no.hiof.geire.coursesapp.dataAccess.DatabaseAccess.getEmneArray;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import no.hiof.geire.coursesapp.adapter.StudyProgramRecyclerViewAdapter;
+import no.hiof.geire.coursesapp.model.Studieretning;
+
 import static no.hiof.geire.coursesapp.dataAccess.DatabaseAccess.getStudieretningArray;
 
 public class RegiActivity extends AppCompatActivity implements StudyProgramRecyclerViewAdapter.ItemClickListener{
@@ -53,6 +43,8 @@ public class RegiActivity extends AppCompatActivity implements StudyProgramRecyc
 
     private String jsonStringStudieretninger;
 
+    private InputValidation iv = new InputValidation();
+
     StudyProgramRecyclerViewAdapter studyProgramAdapter;
 
     Integer RegisterAs = 0;
@@ -66,7 +58,7 @@ public class RegiActivity extends AppCompatActivity implements StudyProgramRecyc
         Intent intent = getIntent();
         RegisterAs = intent.getIntExtra("register as", 0);
 
-        downloadStudieretningerJSON(getString(R.string.ip) + "/api/studieretning/read.php");
+        downloadStudieretningerJSON(getString(R.string.ip) + "/api/studieretning/getStudieretninger.php");
 
         RegisterMainTextView = findViewById(R.id.registerMainTextView);
         CourseTextView = findViewById(R.id.courseTextView);
@@ -125,15 +117,28 @@ public class RegiActivity extends AppCompatActivity implements StudyProgramRecyc
     }
 
     private void checkRegisterStudentInput(){
-        if(!EmailEditText.getText().toString().equals("") && !NameEditText.getText().toString().equals("") && !PasswordEditText.getText().toString().equals("") && !StudyProgramTextView.getText().toString().equals("")) {
+        if(!iv.isInputEmpty(EmailEditText.getText().toString()) && !iv.isInputEmpty(NameEditText.getText().toString()) && !iv.isInputEmpty(PasswordEditText.getText().toString()) && !iv.isInputEmpty(StudyProgramTextView.getText().toString())) {
             if(PasswordEditText.getText().toString().length() > 7 && NameEditText.getText().toString().length() > 4) {
-                String regex = "^[\\w!#$%&’*+/=?`{|}~^-]+(?:\\.[\\w!#$%&’*+/=?`{|}~^-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,6}$";
-                Pattern pattern = Pattern.compile(regex);
-                Matcher matcher = pattern.matcher(EmailEditText.getText().toString());
-                if (matcher.matches()) {
-                    registerStudent();
-                } else {
-                    Toast.makeText(this, "Bad email", Toast.LENGTH_SHORT).show();
+                if(iv.checkPasswordStrength(PasswordEditText.getText().toString())) {
+                    if (iv.emailIsValid(EmailEditText.getText().toString())) {
+                        if (iv.personTypeValueIsValid(RegisterAs)) {
+                            if (iv.nameContainsValidCharacters(NameEditText.getText().toString())) {
+                                if (iv.studentYearIsValid(Integer.parseInt(ClassEditText.getText().toString()))) {
+                                    registerStudent();
+                                } else {
+                                    Toast.makeText(this, "Please have a closer look at class year", Toast.LENGTH_SHORT).show();
+                                }
+                            } else {
+                                Toast.makeText(this, "Please give your real name", Toast.LENGTH_SHORT).show();
+                            }
+                        } else {
+                            Toast.makeText(this, "Something weird happened, try again", Toast.LENGTH_SHORT).show();
+                        }
+                    } else {
+                        Toast.makeText(this, "Bad email", Toast.LENGTH_SHORT).show();
+                    }
+                } else{
+                    Toast.makeText(this, "Password must be at least 8 characters, include one upper case, one lower case and a digit", Toast.LENGTH_SHORT).show();
                 }
             }
             else{
@@ -146,13 +151,20 @@ public class RegiActivity extends AppCompatActivity implements StudyProgramRecyc
     }
 
     private void checkRegisterLecturerInput(){
-        if(!EmailEditText.getText().toString().equals("") && !NameEditText.getText().toString().equals("") && !PasswordEditText.getText().toString().equals("")) {
+        if(!iv.isInputEmpty(EmailEditText.getText().toString()) && !iv.isInputEmpty(NameEditText.getText().toString()) && !iv.isInputEmpty(PasswordEditText.getText().toString())) {
             if(PasswordEditText.getText().toString().length() > 7 && NameEditText.getText().toString().length() > 4) {
-                String regex = "^[\\w!#$%&’*+/=?`{|}~^-]+(?:\\.[\\w!#$%&’*+/=?`{|}~^-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,6}$";
-                Pattern pattern = Pattern.compile(regex);
-                Matcher matcher = pattern.matcher(EmailEditText.getText().toString());
-                if (matcher.matches()) {
-                    registerLecturer();
+                if (iv.emailIsValid(EmailEditText.getText().toString())) {
+                    if(iv.personTypeValueIsValid(RegisterAs)) {
+                        if(iv.nameContainsValidCharacters(NameEditText.getText().toString())) {
+                            registerLecturer();
+                        }
+                        else{
+                            Toast.makeText(this, "Please give your real name", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                    else{
+                        Toast.makeText(this, "Something weird happened, try again", Toast.LENGTH_SHORT).show();
+                    }
                 } else {
                     Toast.makeText(this, "Bad email", Toast.LENGTH_SHORT).show();
                 }
@@ -232,38 +244,46 @@ public class RegiActivity extends AppCompatActivity implements StudyProgramRecyc
 
     }*/
 
+    /*private String makeHash(String password) {
+        String hashed = BCrypt.hashpw(password, BCrypt.gensalt());
+
+        return hashed;
+    }*/
+
     private void createStudent() throws JSONException {
         String json = "";
 
+        //String password = makeHash(PasswordEditText.getText().toString());
         int kull = Integer.parseInt(ClassEditText.getText().toString());
 
         JSONObject jsonObject = new JSONObject();
-        jsonObject.accumulate("epost", EmailEditText.getText().toString());
         jsonObject.accumulate("navn", NameEditText.getText().toString());
+        jsonObject.accumulate("epost", EmailEditText.getText().toString());
         jsonObject.accumulate("passord", PasswordEditText.getText().toString());
-        jsonObject.accumulate("kull", ClassEditText.getText().toString());
         jsonObject.accumulate("studieretning", sr.getIdStudieretning());
-        jsonObject.accumulate("key", 1);
+        jsonObject.accumulate("kull", ClassEditText.getText().toString());
 
         json = jsonObject.toString();
-        sendPost(json, getString(R.string.ip) + "/api/person/create.php");
+        sendPostNewUser(json, getString(R.string.ip) + "/api/student/opprettStudent.php");
     }
 
     private void createForeleser() throws JSONException {
         String json = "";
 
+        //String password = makeHash(PasswordEditText.getText().toString());
+
         JSONObject jsonObject = new JSONObject();
-        jsonObject.accumulate("epost", EmailEditText.getText().toString());
         jsonObject.accumulate("navn", NameEditText.getText().toString());
+        jsonObject.accumulate("epost", EmailEditText.getText().toString());
         jsonObject.accumulate("passord", PasswordEditText.getText().toString());
         jsonObject.accumulate("bilde", EmailEditText.getText().toString()+".png");
-        jsonObject.accumulate("key", 0);
+        jsonObject.accumulate("emner", CourseTextView.getText().toString());
 
         json = jsonObject.toString();
-        sendPost(json, getString(R.string.ip) + "/api/person/create.php");
+        sendPostNewUser(json, getString(R.string.ip) + "api/foreleser/opprettForeleser.php ");
     }
 
-    private void sendPost(final String json, final String urlString) {
+    private void sendPostNewUser(final String json, final String urlString) {
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -305,7 +325,6 @@ public class RegiActivity extends AppCompatActivity implements StudyProgramRecyc
             protected void onPreExecute() {
                 super.onPreExecute();
             }
-
 
             @Override
             protected void onPostExecute(String s) {
